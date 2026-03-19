@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="IRepository.cs" />
+  </Folder>
+  <Project Path="ChapterX.API/ChapterX.API.csproj" />
+  <Project Path="ChapterX.Application/ChapterX.Application.csproj" />
+  <Project Path="ChapterX.Domain/ChapterX.Domain.csproj" />
+  <Project Path="ChapterX.Infrastructure/ChapterX.Infrastructure.csproj" />
+</Solution>
