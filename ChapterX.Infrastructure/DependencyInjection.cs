@@ -1,7 +1,9 @@
 using ChapterX.Application.Abstractions;
+using ChapterX.Application.Auth;
 using ChapterX.Domain.Repositories;
 using ChapterX.Infrastructure.Data.DataContext;
 using ChapterX.Infrastructure.Repositories;
+using ChapterX.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +18,7 @@ namespace ChapterX.Infrastructure
                 options.UseNpgsql(configuration.GetConnectionString("Database")));
 
             services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IWriterRepository, WriterRepository>();
