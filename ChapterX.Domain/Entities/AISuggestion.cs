@@ -12,7 +12,7 @@ namespace ChapterX.Domain.Entities
         public int Id { get; set; }
         public string OriginalText { get; set; } = string.Empty;
         public string SuggestedText { get; set; } = string.Empty;
-        public bool Accepted { get; set; }
+        public bool? Accepted { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? AppliedAt { get; set; }
 

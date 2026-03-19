@@ -6,6 +6,6 @@ namespace ChapterX.Application.AISuggestion.Commands
         int Id,
         string OriginalText,
         string SuggestedText,
-        bool Accepted
+        bool? Accepted
     ) : IRequest<UpdateResponse>;
 }

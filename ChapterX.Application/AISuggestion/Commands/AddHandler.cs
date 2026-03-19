@@ -22,7 +22,7 @@ namespace ChapterX.Application.AISuggestion.Commands
                 OriginalText = request.OriginalText,
                 SuggestedText = request.SuggestedText,
                 StoryId = request.StoryId,
-                Accepted = false,
+                Accepted = null,
                 CreatedAt = DateTime.UtcNow
             };
 

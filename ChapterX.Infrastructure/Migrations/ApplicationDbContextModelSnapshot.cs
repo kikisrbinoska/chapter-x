@@ -30,7 +30,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Accepted")
+                    b.Property<bool?>("Accepted")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("AppliedAt")
@@ -58,7 +58,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("StoryId");
 
-                    b.ToTable("AISuggestions");
+                    b.ToTable("AISuggestions", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Admin", b =>
@@ -77,7 +77,7 @@ namespace ChapterX.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Admins");
+                    b.ToTable("Admins", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Chapter", b =>
@@ -128,7 +128,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("StoryId");
 
-                    b.ToTable("Chapters");
+                    b.ToTable("Chapters", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Collaboration", b =>
@@ -158,7 +158,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Collaborations");
+                    b.ToTable("Collaborations", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Comment", b =>
@@ -191,7 +191,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Genre", b =>
@@ -208,7 +208,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Genres");
+                    b.ToTable("Genres", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.HasGenre", b =>
@@ -231,7 +231,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("StoryId");
 
-                    b.ToTable("HasGenres");
+                    b.ToTable("HasGenres", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Likes", b =>
@@ -262,7 +262,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Likes");
+                    b.ToTable("Likes", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.NeedApproval", b =>
@@ -301,7 +301,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("StoryId");
 
-                    b.ToTable("NeedApprovals");
+                    b.ToTable("NeedApprovals", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Notification", b =>
@@ -328,7 +328,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Notify", b =>
@@ -359,7 +359,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifies");
+                    b.ToTable("Notifies", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.ReadingList", b =>
@@ -393,7 +393,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ReadingLists");
+                    b.ToTable("ReadingLists", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.ReadingListItems", b =>
@@ -419,7 +419,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("StoryId");
 
-                    b.ToTable("ReadingListItems");
+                    b.ToTable("ReadingListItems", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.RegularUser", b =>
@@ -438,7 +438,7 @@ namespace ChapterX.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("RegularUsers");
+                    b.ToTable("RegularUsers", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Story", b =>
@@ -483,7 +483,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasIndex("WriterId");
 
-                    b.ToTable("Stories");
+                    b.ToTable("Stories", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.User", b =>
@@ -522,7 +522,7 @@ namespace ChapterX.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.Writer", b =>
@@ -545,7 +545,7 @@ namespace ChapterX.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Writers");
+                    b.ToTable("Writers", (string)null);
                 });
 
             modelBuilder.Entity("ChapterX.Domain.Entities.AISuggestion", b =>

@@ -24,7 +24,7 @@ namespace ChapterX.Application.AISuggestion.Commands
             suggestion.OriginalText = request.OriginalText;
             suggestion.SuggestedText = request.SuggestedText;
             suggestion.Accepted = request.Accepted;
-            if (request.Accepted)
+            if (request.Accepted == true)
                 suggestion.AppliedAt = DateTime.UtcNow;
 
             await _aiSuggestionRepository.UpdateAsync(suggestion, cancellationToken);
