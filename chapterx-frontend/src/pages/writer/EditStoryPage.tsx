@@ -62,6 +62,7 @@ export const EditStoryPage: React.FC = () => {
     updateStory(story.story_id, { ...form, updated_at: new Date().toISOString() })
     addToast('Story updated!')
     setSaving(false)
+    navigate(`/story/${story.story_id}`)
   }
 
   const handleDelete = () => {

@@ -22,6 +22,17 @@ import {
   mockReadingLists,
 } from '../data/mockData'
 
+const API = 'https://localhost:7125/api'
+
+function getAuthHeaders() {
+  try {
+    const token = JSON.parse(localStorage.getItem('chapterx-auth') || '{}')?.state?.token
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch {
+    return {}
+  }
+}
+
 interface LikeRecord {
   userId: number
   storyId: number
@@ -37,16 +48,21 @@ interface StoryStore {
   readingLists: ReadingList[]
   likedStories: LikeRecord[]
 
+  // Fetch from backend
+  fetchStories: () => Promise<void>
+  fetchChapters: () => Promise<void>
+  fetchReadingLists: () => Promise<void>
+
   // Story actions
-  addStory: (story: Story) => void
-  updateStory: (id: number, partial: Partial<Story>) => void
-  deleteStory: (id: number) => void
+  addStory: (story: Story) => Promise<number>
+  updateStory: (id: number, partial: Partial<Story>) => Promise<void>
+  deleteStory: (id: number) => Promise<void>
   updateStoryStatus: (id: number, status: StoryStatus) => void
 
   // Chapter actions
-  addChapter: (chapter: Chapter) => void
-  updateChapter: (id: number, partial: Partial<Chapter>) => void
-  deleteChapter: (id: number) => void
+  addChapter: (chapter: Chapter) => Promise<void>
+  updateChapter: (id: number, partial: Partial<Chapter>) => Promise<void>
+  deleteChapter: (id: number) => Promise<void>
   incrementViewCount: (chapterId: number) => void
 
   // Comment actions
@@ -73,10 +89,10 @@ interface StoryStore {
   deleteGenre: (id: number) => void
 
   // Reading list actions
-  createReadingList: (list: ReadingList) => void
-  addStoryToList: (listId: number, item: ReadingListItem) => void
-  removeStoryFromList: (listId: number, storyId: number) => void
-  deleteReadingList: (listId: number) => void
+  createReadingList: (list: ReadingList) => Promise<number>
+  addStoryToList: (listId: number, item: ReadingListItem) => Promise<void>
+  removeStoryFromList: (listId: number, storyId: number) => Promise<void>
+  deleteReadingList: (listId: number) => Promise<void>
 }
 
 export const useStoryStore = create<StoryStore>((set, get) => ({
@@ -89,21 +105,111 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
   readingLists: [...mockReadingLists],
   likedStories: [],
 
-  addStory: (story) =>
-    set(state => ({ stories: [...state.stories, story] })),
+  fetchStories: async () => {
+    try {
+      const res = await axios.get(`${API}/stories`)
+      const data: any[] = res.data?.stories ?? res.data ?? []
+      const stories: Story[] = data.map((s: any) => ({
+        story_id: s.id,
+        user_id: s.userId,
+        title: s.shortDescription,
+        short_description: s.shortDescription,
+        content: s.content,
+        mature_content: s.matureContent,
+        status: 'published' as StoryStatus,
+        author_username: '',
+        created_at: s.createdAt,
+        updated_at: s.updatedAt,
+        total_likes: 0,
+        total_comments: 0,
+        total_chapters: 0,
+        total_views: 0,
+        genres: [],
+      }))
+      if (stories.length > 0) set({ stories })
+    } catch {
+      // keep mock data on failure
+    }
+  },
 
-  updateStory: (id, partial) =>
+  fetchChapters: async () => {
+    try {
+      const res = await axios.get(`${API}/chapters`)
+      const data: any[] = res.data?.chapters ?? res.data ?? []
+      const chapters: Chapter[] = data.map((c: any) => ({
+        chapter_id: c.id,
+        story_id: c.storyId,
+        title: c.title ?? c.name,
+        content: c.content,
+        chapter_number: c.number,
+        word_count: c.wordCount ?? 0,
+        view_count: c.viewCount ?? 0,
+        is_published: true,
+        created_at: c.createdAt,
+        updated_at: c.updatedAt,
+      }))
+      if (chapters.length > 0) set({ chapters })
+    } catch {
+      // keep mock data on failure
+    }
+  },
+
+  addStory: async (story) => {
+    set(state => ({ stories: [...state.stories, story] }))
+    const res = await axios.post(`${API}/stories`, {
+      matureContent: story.mature_content,
+      shortDescription: story.title || story.short_description,
+      image: null,
+      content: story.content,
+      userId: story.user_id,
+    }, { headers: getAuthHeaders() })
+    const backendId = res.data?.id ?? res.data
+    if (backendId && backendId !== story.story_id) {
+      set(state => ({
+        stories: state.stories.map(s =>
+          s.story_id === story.story_id ? { ...s, story_id: backendId } : s
+        ),
+        chapters: state.chapters.map(c =>
+          c.story_id === story.story_id ? { ...c, story_id: backendId } : c
+        ),
+      }))
+      return backendId
+    }
+    return story.story_id
+  },
+
+  updateStory: async (id, partial) => {
     set(state => ({
       stories: state.stories.map(s => (s.story_id === id ? { ...s, ...partial } : s)),
-    })),
+    }))
+    try {
+      const story = get().stories.find(s => s.story_id === id)
+      if (!story) return
+      await axios.put(`${API}/stories/${id}`, {
+        id,
+        matureContent: partial.mature_content ?? story.mature_content,
+        shortDescription: partial.title ?? partial.short_description ?? story.title ?? story.short_description,
+        image: null,
+        content: partial.content ?? story.content,
+      }, { headers: getAuthHeaders() })
+    } catch {
+      // keep optimistic update on failure
+    }
+  },
 
-  deleteStory: (id) =>
+  deleteStory: async (id) => {
     set(state => ({
       stories: state.stories.filter(s => s.story_id !== id),
       chapters: state.chapters.filter(c => c.story_id !== id),
       comments: state.comments.filter(c => c.story_id !== id),
       collaborations: state.collaborations.filter(c => c.story_id !== id),
-    })),
+    }))
+    try {
+      await axios.delete(`${API}/stories/${id}`, { headers: getAuthHeaders() })
+    } catch {
+      // keep optimistic delete on failure
+    }
+  },
 
   updateStoryStatus: (id, status) =>
     set(state => ({
@@ -112,7 +218,7 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
       ),
     })),
 
-  addChapter: (chapter) =>
+  addChapter: async (chapter) => {
     set(state => ({
       chapters: [...state.chapters, chapter],
       stories: state.stories.map(s =>
@@ -120,16 +226,47 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
           ? { ...s, total_chapters: s.total_chapters + 1 }
           : s
       ),
-    })),
+    }))
+    const res = await axios.post(`${API}/chapters`, {
+      number: chapter.chapter_number,
+      name: chapter.title,
+      title: chapter.title,
+      content: chapter.content,
+      storyId: chapter.story_id,
+    }, { headers: getAuthHeaders() })
+    const backendId = res.data?.id ?? res.data
+    if (backendId && backendId !== chapter.chapter_id) {
+      set(state => ({
+        chapters: state.chapters.map(c =>
+          c.chapter_id === chapter.chapter_id ? { ...c, chapter_id: backendId } : c
+        ),
+      }))
+    }
+  },
 
-  updateChapter: (id, partial) =>
+  updateChapter: async (id, partial) => {
     set(state => ({
       chapters: state.chapters.map(c =>
         c.chapter_id === id ? { ...c, ...partial, updated_at: new Date().toISOString() } : c
       ),
-    })),
+    }))
+    try {
+      const chapter = get().chapters.find(c => c.chapter_id === id)
+      if (!chapter) return
+      await axios.put(`${API}/chapters/${id}`, {
+        id,
+        number: partial.chapter_number ?? chapter.chapter_number,
+        name: partial.title ?? chapter.title,
+        title: partial.title ?? chapter.title,
+        content: partial.content ?? chapter.content,
+        wordCount: partial.word_count ?? chapter.word_count,
+      }, { headers: getAuthHeaders() })
+    } catch {
+      // keep optimistic update on failure
+    }
+  },
 
-  deleteChapter: (id) =>
+  deleteChapter: async (id) => {
     set(state => {
       const chapter = state.chapters.find(c => c.chapter_id === id)
       return {
@@ -142,7 +279,13 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
             )
           : state.stories,
       }
-    }),
+    })
+    try {
+      await axios.delete(`${API}/chapters/${id}`, { headers: getAuthHeaders() })
+    } catch {
+      // keep optimistic delete on failure
+    }
+  },
 
   incrementViewCount: (chapterId) =>
     set(state => ({
@@ -217,7 +360,7 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
 
   fetchSuggestions: async () => {
     try {
-      const res = await axios.get('https://localhost:7125/api/aisuggestions')
+      const res = await axios.get(`${API}/aisuggestions`)
       const data = res.data.aiSuggestions ?? res.data
       const mapped: AISuggestion[] = data.map((s: any) => ({
         suggestion_id: s.id,
@@ -247,7 +390,7 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
       ),
     }))
     try {
-      await axios.put(`https://localhost:7125/api/aisuggestions/${id}`, {
+      await axios.put(`${API}/aisuggestions/${id}`, {
         id,
         originalText: s.original_text,
         suggestedText: s.suggested_text,
@@ -267,7 +410,7 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
       ),
     }))
     try {
-      await axios.put(`https://localhost:7125/api/aisuggestions/${id}`, {
+      await axios.put(`${API}/aisuggestions/${id}`, {
         id,
         originalText: s.original_text,
         suggestedText: s.suggested_text,
@@ -283,7 +426,7 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
     const tempId = Date.now()
     set(state => ({ aiSuggestions: [...state.aiSuggestions, { ...suggestion, suggestion_id: tempId }] }))
     try {
-      const res = await axios.post('https://localhost:7125/api/aisuggestions', {
+      const res = await axios.post('${API}/aisuggestions', {
         originalText: suggestion.original_text,
         suggestedText: suggestion.suggested_text,
         storyId: suggestion.chapter_id,
@@ -305,29 +448,96 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
   deleteGenre: (id) =>
     set(state => ({ genres: state.genres.filter(g => g.genre_id !== id) })),
 
-  createReadingList: (list) =>
-    set(state => ({ readingLists: [...state.readingLists, list] })),
+  fetchReadingLists: async () => {
+    try {
+      const [listsRes, storiesRes] = await Promise.all([
+        axios.get(`${API}/readinglists`),
+        axios.get(`${API}/stories`),
+      ])
+      const data: any[] = listsRes.data?.readingLists ?? listsRes.data ?? []
+      const storiesData: any[] = storiesRes.data?.stories ?? storiesRes.data ?? []
+      const lists: ReadingList[] = data.map((l: any) => ({
+        list_id: l.id,
+        user_id: l.userId,
+        username: '',
+        name: l.name,
+        description: l.content ?? '',
+        is_public: l.isPublic,
+        created_at: l.createdAt,
+        stories: (l.readingListItems ?? []).map((i: any) => {
+          const story = storiesData.find((s: any) => s.id === i.storyId)
+          return {
+            item_id: i.id ?? 0,
+            list_id: l.id,
+            story_id: i.storyId,
+            story_title: story?.title ?? story?.shortDescription ?? `Story #${i.storyId}`,
+            author_username: story?.authorUsername ?? '',
+            added_at: i.addedAt ?? new Date().toISOString(),
+            genres: story?.genres ?? [],
+          }
+        }),
+      }))
+      if (lists.length > 0) set({ readingLists: lists })
+    } catch {
+      // keep mock data on failure
+    }
+  },
 
-  addStoryToList: (listId, item) =>
+  createReadingList: async (list) => {
+    set(state => ({ readingLists: [...state.readingLists, list] }))
+    const res = await axios.post(`${API}/readinglists`, {
+      name: list.name,
+      content: list.description ?? null,
+      isPublic: list.is_public,
+      userId: list.user_id,
+    }, { headers: getAuthHeaders() })
+    const backendId = res.data?.id ?? res.data
+    if (backendId && backendId !== list.list_id) {
+      set(state => ({
+        readingLists: state.readingLists.map(l =>
+          l.list_id === list.list_id ? { ...l, list_id: backendId } : l
+        ),
+      }))
+      return backendId
+    }
+    return list.list_id
+  },
+
+  addStoryToList: async (listId, item) => {
     set(state => ({
       readingLists: state.readingLists.map(l =>
-        l.list_id === listId
-          ? { ...l, stories: [...l.stories, item] }
-          : l
+        l.list_id === listId ? { ...l, stories: [...l.stories, item] } : l
       ),
-    })),
+    }))
+    await axios.post(`${API}/readinglistitems`, {
+      readingListId: listId,
+      storyId: item.story_id,
+    }, { headers: getAuthHeaders() })
+  },
 
-  removeStoryFromList: (listId, storyId) =>
+  removeStoryFromList: async (listId, storyId) => {
     set(state => ({
       readingLists: state.readingLists.map(l =>
         l.list_id === listId
           ? { ...l, stories: l.stories.filter(s => s.story_id !== storyId) }
           : l
       ),
-    })),
+    }))
+    try {
+      // find the item id from backend list items to delete
+      const res = await axios.get(`${API}/readinglistitems`)
+      const items: any[] = res.data?.readingListItems ?? res.data ?? []
+      const item = items.find((i: any) => i.readingListId === listId && i.storyId === storyId)
+      if (item) await axios.delete(`${API}/readinglistitems/${item.id}`, { headers: getAuthHeaders() })
+    } catch {
+      // optimistic update already applied
+    }
+  },
 
-  deleteReadingList: (listId) =>
+  deleteReadingList: async (listId) => {
     set(state => ({
       readingLists: state.readingLists.filter(l => l.list_id !== listId),
-    })),
+    }))
+    await axios.delete(`${API}/readinglists/${listId}`, { headers: getAuthHeaders() })
+  },
 }))

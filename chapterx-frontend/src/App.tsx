@@ -1,7 +1,8 @@
-import React, { Suspense, lazy, ReactNode } from 'react'
+import React, { Suspense, lazy, ReactNode, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import { useUIStore } from './store/uiStore'
+import { useStoryStore } from './store/storyStore'
 import { UserRole } from './types'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
@@ -66,6 +67,14 @@ const ProtectedRoute = ({
 }
 
 function App() {
+  const { fetchStories, fetchChapters, fetchReadingLists } = useStoryStore()
+
+  useEffect(() => {
+    fetchStories()
+    fetchChapters()
+    fetchReadingLists()
+  }, [])
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />

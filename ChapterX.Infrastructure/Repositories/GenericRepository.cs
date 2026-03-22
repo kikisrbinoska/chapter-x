@@ -20,7 +20,7 @@ namespace ChapterX.Infrastructure.Repositories
         public async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
             => await _dbSet.FindAsync([id], cancellationToken);
 
-        public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
             => await _dbSet.ToListAsync(cancellationToken);
 
         public async Task AddAsync(T entity, CancellationToken cancellationToken = default)

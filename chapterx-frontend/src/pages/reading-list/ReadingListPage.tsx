@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, BookOpen, Lock, Globe, Trash2, X } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
@@ -11,7 +11,11 @@ import { GenreBadge } from '../../components/ui/Badge'
 export const ReadingListPage: React.FC = () => {
   const navigate = useNavigate()
   const { currentUser } = useAuthStore()
-  const { readingLists, createReadingList, deleteReadingList, removeStoryFromList } = useStoryStore()
+  const { readingLists, fetchReadingLists, createReadingList, deleteReadingList, removeStoryFromList } = useStoryStore()
+
+  useEffect(() => {
+    fetchReadingLists()
+  }, [])
   const { addToast } = useUIStore()
   const [createOpen, setCreateOpen] = useState(false)
   const [newListName, setNewListName] = useState('')
@@ -30,19 +34,24 @@ export const ReadingListPage: React.FC = () => {
 
   const myLists = readingLists.filter(l => l.user_id === currentUser.user_id)
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newListName.trim()) return
-    createReadingList({
-      list_id: Date.now(),
-      user_id: currentUser.user_id,
-      username: currentUser.username,
-      name: newListName.trim(),
-      description: newListDesc.trim() || undefined,
-      is_public: isPublic,
-      created_at: new Date().toISOString(),
-      stories: [],
-    })
-    addToast(`"${newListName}" created!`)
+    try {
+      await createReadingList({
+        list_id: Date.now(),
+        user_id: currentUser.user_id,
+        username: currentUser.username,
+        name: newListName.trim(),
+        description: newListDesc.trim() || undefined,
+        is_public: isPublic,
+        created_at: new Date().toISOString(),
+        stories: [],
+      })
+      addToast(`"${newListName}" created!`)
+    } catch (err: any) {
+      addToast(err?.response?.data?.message || 'Failed to create list.', 'error')
+      return
+    }
     setNewListName('')
     setNewListDesc('')
     setIsPublic(false)
@@ -99,7 +108,7 @@ export const ReadingListPage: React.FC = () => {
                     <p className="text-slate-500 text-xs mt-1">{list.stories.length} stories</p>
                   </div>
                   <button
-                    onClick={() => { deleteReadingList(list.list_id); addToast('List deleted', 'info') }}
+                    onClick={async () => { try { await deleteReadingList(list.list_id); addToast('List deleted', 'info') } catch { addToast('Failed to delete list.', 'error') } }}
                     className="text-slate-500 hover:text-rose-400 transition-colors p-1"
                   >
                     <Trash2 size={14} />

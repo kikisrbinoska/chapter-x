@@ -6,10 +6,12 @@ namespace ChapterX.Application.Auth
     public class RegisterHandler : IRequestHandler<RegisterRequest, RegisterResponse>
     {
         private readonly IUserRepository _userRepository;
+        private readonly IWriterRepository _writerRepository;
 
-        public RegisterHandler(IUserRepository userRepository)
+        public RegisterHandler(IUserRepository userRepository, IWriterRepository writerRepository)
         {
             _userRepository = userRepository;
+            _writerRepository = writerRepository;
         }
 
         public async Task<RegisterResponse> Handle(RegisterRequest request, CancellationToken cancellationToken)
@@ -30,6 +32,9 @@ namespace ChapterX.Application.Auth
             };
 
             await _userRepository.AddAsync(user, cancellationToken);
+
+            var writer = new Domain.Entities.Writer { Id = user.Id };
+            await _writerRepository.AddAsync(writer, cancellationToken);
 
             return new RegisterResponse(user.Id, user.Username, user.Email);
         }

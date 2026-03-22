@@ -55,9 +55,16 @@ export const CreateChapterPage: React.FC = () => {
       updated_at: new Date().toISOString(),
       is_published: isPublished,
     }
-    addChapter(chapter)
+    try {
+      await addChapter(chapter)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to save chapter.'
+      addToast(msg, 'error')
+      setLoading(false)
+      return
+    }
     addToast(isPublished ? 'Chapter published!' : 'Chapter saved as draft!')
-    navigate(`/writer/edit-story/${storyId}`)
+    navigate(isPublished ? `/story/${storyId}` : `/writer/edit-story/${storyId}`)
     setLoading(false)
   }
 

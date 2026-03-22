@@ -38,7 +38,7 @@ export const StoryDetailPage: React.FC = () => {
   const gradient = getGenreGradient(story.genres[0])
   const myLists = currentUser ? readingLists.filter(l => l.user_id === currentUser.user_id) : []
 
-  const handleAddToList = (listId: number) => {
+  const handleAddToList = async (listId: number) => {
     const list = readingLists.find(l => l.list_id === listId)
     if (!list) return
     if (list.stories.some(s => s.story_id === story.story_id)) {
@@ -54,12 +54,21 @@ export const StoryDetailPage: React.FC = () => {
       added_at: new Date().toISOString(),
       genres: story.genres,
     }
-    addStoryToList(listId, item)
-    addToast(`Added to "${list.name}"!`)
+    try {
+      await addStoryToList(listId, item)
+      addToast(`Added to "${list.name}"!`)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || ''
+      if (msg.includes('already') || msg.includes('duplicate') || err?.response?.status === 400) {
+        addToast('Already in this list', 'info')
+      } else {
+        addToast('Failed to add to list.', 'error')
+      }
+    }
     setListModalOpen(false)
   }
 
-  const handleCreateList = () => {
+  const handleCreateList = async () => {
     if (!newListName.trim() || !currentUser) return
     const newList = {
       list_id: Date.now(),
@@ -68,18 +77,23 @@ export const StoryDetailPage: React.FC = () => {
       name: newListName.trim(),
       is_public: false,
       created_at: new Date().toISOString(),
-      stories: [{
+      stories: [],
+    }
+    try {
+      const realListId = await createReadingList(newList)
+      await addStoryToList(realListId, {
         item_id: Date.now() + 1,
-        list_id: Date.now(),
+        list_id: realListId,
         story_id: story.story_id,
         story_title: story.title,
         author_username: story.author_username,
         added_at: new Date().toISOString(),
         genres: story.genres,
-      }],
+      })
+      addToast(`Created "${newListName}" and added story!`)
+    } catch {
+      addToast('Failed to create list.', 'error')
     }
-    createReadingList(newList)
-    addToast(`Created "${newListName}" and added story!`)
     setNewListName('')
     setListModalOpen(false)
   }

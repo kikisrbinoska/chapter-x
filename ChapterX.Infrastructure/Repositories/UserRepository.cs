@@ -12,7 +12,11 @@ namespace ChapterX.Infrastructure.Repositories
         }
 
         public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
-            => await _dbSet.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+            => await _dbSet
+                .Include(u => u.Admin)
+                .Include(u => u.Writer)
+                .Include(u => u.RegularUser)
+                .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
 
         public async Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
             => await _dbSet.FirstOrDefaultAsync(u => u.Username == username, cancellationToken);

@@ -26,7 +26,7 @@ export const useAuthStore = create<AuthStore>()(
       currentUser: null,
       token: null,
       showMatureContent: true,
-      allUsers: [...mockUsers],
+      allUsers: [],
 
       login: async (emailOrUsername, password) => {
         // Try backend first
@@ -35,23 +35,28 @@ export const useAuthStore = create<AuthStore>()(
             ? emailOrUsername
             : get().allUsers.find(u => u.username === emailOrUsername)?.email || emailOrUsername
           const res = await axios.post(`${API_BASE}/auth/login`, { email, password }, { timeout: 3000 })
-          const { token, userId, username } = res.data
-          const user = get().allUsers.find(u => u.user_id === userId) ||
-            get().allUsers.find(u => u.username === username) || {
-              user_id: userId,
-              username,
-              email,
-              name: username,
-              surname: '',
-              role: 'regular' as const,
-              created_at: new Date().toISOString(),
-              follower_count: 0,
-              following_count: 0,
-            }
+          const { token, userId, username, name, surname, role } = res.data
+          const user: User = {
+            user_id: userId,
+            username,
+            email,
+            name: name ?? username,
+            surname: surname ?? '',
+            role: role ?? 'regular',
+            created_at: new Date().toISOString(),
+            follower_count: 0,
+            following_count: 0,
+          }
           set({ currentUser: user, token })
           return
-        } catch {
-          // Fall through to mock login
+        } catch (err: any) {
+          // Only fall through to mock if the backend is unreachable (network/timeout)
+          // If the backend responded with an error (4xx/5xx), surface it to the user
+          if (err?.response) {
+            const message = err.response.data?.message || err.response.data || 'Invalid email or password.'
+            throw new Error(typeof message === 'string' ? message : 'Invalid email or password.')
+          }
+          // Network error / timeout — fall through to mock login
         }
 
         // Fallback to mock
@@ -65,11 +70,31 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => set({ currentUser: null, token: null }),
 
       register: async (data, role) => {
-        // Try backend first
         try {
           await axios.post(`${API_BASE}/auth/register`, data, { timeout: 3000 })
-        } catch {
-          // Fall through to mock register
+          // Register doesn't return a token — auto-login to get one
+          const loginRes = await axios.post(`${API_BASE}/auth/login`, { email: data.email, password: data.password }, { timeout: 3000 })
+          const { token, userId, username } = loginRes.data
+          const newUser: User = {
+            user_id: userId,
+            username,
+            email: data.email,
+            name: data.name,
+            surname: data.surname,
+            role,
+            created_at: new Date().toISOString(),
+            follower_count: 0,
+            following_count: 0,
+          }
+          set(state => ({ allUsers: [...state.allUsers, newUser], currentUser: newUser, token }))
+          return
+        } catch (err: any) {
+          if (err?.response) {
+            const message = err.response.data?.message || err.response.data || 'Registration failed.'
+            throw new Error(typeof message === 'string' ? message : 'Registration failed.')
+          }
+          // Network error / timeout — fall through to mock register
+          console.warn('Backend unreachable during register, using mock:', err?.message)
         }
 
         const newUser: User = {

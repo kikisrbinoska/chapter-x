@@ -15,7 +15,11 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -67,14 +71,53 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseCors("Frontend");
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseCors("Frontend");
+app.UseExceptionHandler(err => err.Run(async ctx =>
+{
+    var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    ctx.Response.ContentType = "application/json";
+
+    string message;
+    int status;
+
+    if (ex is UnauthorizedAccessException)
+    {
+        status = 401;
+        message = ex.Message;
+    }
+    else if (ex is InvalidOperationException)
+    {
+        status = 400;
+        message = ex.Message;
+    }
+    else if (ex is Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+    {
+        status = 400;
+        var inner = dbEx.InnerException?.Message ?? "";
+        if (inner.Contains("email_format"))
+            message = "Invalid email format.";
+        else if (inner.Contains("unique") || inner.Contains("duplicate") || inner.Contains("23505"))
+            message = "A user with this email or username already exists.";
+        else
+            message = "Database error: " + inner;
+    }
+    else
+    {
+        status = 500;
+        message = ex?.Message ?? "An error occurred.";
+    }
+
+    ctx.Response.StatusCode = status;
+    await ctx.Response.WriteAsJsonAsync(new { message });
+}));
+
 app.UseAuthentication();
 app.UseAuthorization();
 try

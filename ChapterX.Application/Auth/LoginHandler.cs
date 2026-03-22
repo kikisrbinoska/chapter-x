@@ -24,7 +24,11 @@ namespace ChapterX.Application.Auth
 
             var token = _jwtTokenService.GenerateToken(user);
 
-            return new LoginResponse(token, user.Id, user.Username, user.Email);
+            var role = user.Admin != null ? "admin"
+                : user.Writer != null ? "writer"
+                : "regular";
+
+            return new LoginResponse(token, user.Id, user.Username, user.Email, user.Name, user.Surname, role);
         }
     }
 }

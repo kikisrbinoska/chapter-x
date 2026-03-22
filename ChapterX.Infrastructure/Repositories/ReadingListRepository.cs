@@ -11,10 +11,18 @@ namespace ChapterX.Infrastructure.Repositories
         {
         }
 
+        public override async Task<IEnumerable<ReadingList>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(r => r.ReadingListItems)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<IEnumerable<ReadingList>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
                 .Where(r => r.UserId == userId)
+                .Include(r => r.ReadingListItems)
                 .ToListAsync(cancellationToken);
         }
     }

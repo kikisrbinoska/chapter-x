@@ -17,6 +17,10 @@ namespace ChapterX.Application.ReadingListItems.Commands
 
         public async Task<AddResponse> Handle(AddRequest request, CancellationToken cancellationToken)
         {
+            var exists = await _readingListItemsRepository.ExistsAsync(request.ReadingListId, request.StoryId, cancellationToken);
+            if (exists)
+                throw new InvalidOperationException("Story is already in this reading list.");
+
             var readingListItems = new Domain.Entities.ReadingListItems
             {
                 ListId = request.ReadingListId,
