@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Globe, BookOpen, User } from 'lucide-react'
 import { useStoryStore } from '../../store/storyStore'
@@ -9,8 +9,10 @@ import { Avatar } from '../../components/ui/Avatar'
 
 export const CommunityListsPage: React.FC = () => {
   const navigate = useNavigate()
-  const { readingLists } = useStoryStore()
+  const { readingLists, fetchReadingLists } = useStoryStore()
   const [selectedList, setSelectedList] = useState<ReadingList | null>(null)
+
+  useEffect(() => { fetchReadingLists() }, [])
 
   const publicLists = readingLists.filter(l => l.is_public)
 

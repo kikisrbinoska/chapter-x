@@ -24,6 +24,27 @@ import {
 
 const API = 'https://localhost:7125/api'
 
+function mapReadingList(l: any): ReadingList {
+  return {
+    list_id: l.id,
+    user_id: l.userId,
+    username: l.username ?? '',
+    name: l.name,
+    description: l.content ?? '',
+    is_public: l.isPublic,
+    created_at: l.createdAt,
+    stories: (l.readingListItems ?? []).map((i: any) => ({
+      item_id: i.listId ?? 0,
+      list_id: l.id,
+      story_id: i.storyId,
+      story_title: i.storyTitle ?? `Story #${i.storyId}`,
+      author_username: i.authorUsername ?? '',
+      added_at: i.addedAt ?? new Date().toISOString(),
+      genres: i.genres ?? [],
+    })),
+  }
+}
+
 function getAuthHeaders() {
   try {
     const token = JSON.parse(localStorage.getItem('chapterx-auth') || '{}')?.state?.token
@@ -52,6 +73,8 @@ interface StoryStore {
   fetchStories: () => Promise<void>
   fetchChapters: () => Promise<void>
   fetchReadingLists: () => Promise<void>
+  fetchUserReadingLists: (userId: number) => Promise<void>
+  fetchGenres: () => Promise<void>
 
   // Story actions
   addStory: (story: Story) => Promise<number>
@@ -85,8 +108,8 @@ interface StoryStore {
   addSuggestion: (suggestion: Omit<AISuggestion, 'suggestion_id'>) => Promise<void>
 
   // Genre actions
-  addGenre: (genre: Genre) => void
-  deleteGenre: (id: number) => void
+  addGenre: (name: string) => Promise<void>
+  deleteGenre: (id: number) => Promise<void>
 
   // Reading list actions
   createReadingList: (list: ReadingList) => Promise<number>
@@ -102,7 +125,7 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
   collaborations: [...mockCollaborations],
   aiSuggestions: [...mockAISuggestions],
   genres: [...mockGenres],
-  readingLists: [...mockReadingLists],
+  readingLists: [],
   likedStories: [],
 
   fetchStories: async () => {
@@ -117,14 +140,14 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
         content: s.content,
         mature_content: s.matureContent,
         status: 'published' as StoryStatus,
-        author_username: '',
+        author_username: s.writer?.user?.username ?? '',
         created_at: s.createdAt,
         updated_at: s.updatedAt,
         total_likes: 0,
         total_comments: 0,
         total_chapters: 0,
         total_views: 0,
-        genres: [],
+        genres: (s.hasGenres ?? []).map((hg: any) => hg.genre?.name ?? hg.name).filter(Boolean),
       }))
       if (stories.length > 0) set({ stories })
     } catch {
@@ -158,10 +181,11 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
     set(state => ({ stories: [...state.stories, story] }))
     const res = await axios.post(`${API}/stories`, {
       matureContent: story.mature_content,
-      shortDescription: story.title || story.short_description,
+      shortDescription: story.short_description || story.title,
       image: null,
       content: story.content,
       userId: story.user_id,
+      genres: story.genres ?? [],
     }, { headers: getAuthHeaders() })
     const backendId = res.data?.id ?? res.data
     if (backendId && backendId !== story.story_id) {
@@ -442,44 +466,56 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
     }
   },
 
-  addGenre: (genre) =>
-    set(state => ({ genres: [...state.genres, genre] })),
+  fetchGenres: async () => {
+    try {
+      const res = await axios.get(`${API}/genres`)
+      const data: any[] = res.data?.genres ?? res.data ?? []
+      const genres: Genre[] = data.map((g: any) => ({ genre_id: g.id, name: g.name }))
+      if (genres.length > 0) set({ genres })
+    } catch {
+      // keep mock data on failure
+    }
+  },
 
-  deleteGenre: (id) =>
-    set(state => ({ genres: state.genres.filter(g => g.genre_id !== id) })),
+  addGenre: async (name) => {
+    const res = await axios.post(`${API}/genres`, { name }, { headers: getAuthHeaders() })
+    const id = res.data?.id ?? res.data
+    set(state => ({ genres: [...state.genres, { genre_id: id, name }] }))
+  },
+
+  deleteGenre: async (id) => {
+    set(state => ({ genres: state.genres.filter(g => g.genre_id !== id) }))
+    try {
+      await axios.delete(`${API}/genres/${id}`, { headers: getAuthHeaders() })
+    } catch {
+      // optimistic delete already applied
+    }
+  },
 
   fetchReadingLists: async () => {
     try {
-      const [listsRes, storiesRes] = await Promise.all([
-        axios.get(`${API}/readinglists`),
-        axios.get(`${API}/stories`),
-      ])
-      const data: any[] = listsRes.data?.readingLists ?? listsRes.data ?? []
-      const storiesData: any[] = storiesRes.data?.stories ?? storiesRes.data ?? []
-      const lists: ReadingList[] = data.map((l: any) => ({
-        list_id: l.id,
-        user_id: l.userId,
-        username: '',
-        name: l.name,
-        description: l.content ?? '',
-        is_public: l.isPublic,
-        created_at: l.createdAt,
-        stories: (l.readingListItems ?? []).map((i: any) => {
-          const story = storiesData.find((s: any) => s.id === i.storyId)
-          return {
-            item_id: i.id ?? 0,
-            list_id: l.id,
-            story_id: i.storyId,
-            story_title: story?.title ?? story?.shortDescription ?? `Story #${i.storyId}`,
-            author_username: story?.authorUsername ?? '',
-            added_at: i.addedAt ?? new Date().toISOString(),
-            genres: story?.genres ?? [],
-          }
-        }),
-      }))
-      if (lists.length > 0) set({ readingLists: lists })
+      const res = await axios.get(`${API}/readinglists`)
+      const data: any[] = res.data ?? []
+      const lists: ReadingList[] = data.map(mapReadingList)
+      set({ readingLists: lists })
     } catch {
-      // keep mock data on failure
+      // keep existing data on failure
+    }
+  },
+
+  fetchUserReadingLists: async (userId) => {
+    try {
+      const res = await axios.get(`${API}/readinglists/user/${userId}`, { headers: getAuthHeaders() })
+      const data: any[] = res.data ?? []
+      const lists: ReadingList[] = data.map(mapReadingList)
+      set(state => ({
+        readingLists: [
+          ...state.readingLists.filter(l => l.user_id !== userId),
+          ...lists,
+        ]
+      }))
+    } catch (err) {
+      console.error('fetchUserReadingLists failed:', err)
     }
   },
 
@@ -524,11 +560,7 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
       ),
     }))
     try {
-      // find the item id from backend list items to delete
-      const res = await axios.get(`${API}/readinglistitems`)
-      const items: any[] = res.data?.readingListItems ?? res.data ?? []
-      const item = items.find((i: any) => i.readingListId === listId && i.storyId === storyId)
-      if (item) await axios.delete(`${API}/readinglistitems/${item.id}`, { headers: getAuthHeaders() })
+      await axios.delete(`${API}/readinglistitems/${listId}/story/${storyId}`, { headers: getAuthHeaders() })
     } catch {
       // optimistic update already applied
     }

@@ -1,5 +1,6 @@
 using ChapterX.Application.ReadingListItems.Commands;
 using ChapterX.Application.ReadingListItems.Queries;
+using ChapterX.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,13 @@ namespace ChapterX.API.Controllers
     public class ReadingListItemsController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IReadingListItemsRepository _readingListItemsRepository;
         private readonly ILogger<ReadingListItemsController> _logger;
 
-        public ReadingListItemsController(IMediator mediator, ILogger<ReadingListItemsController> logger)
+        public ReadingListItemsController(IMediator mediator, IReadingListItemsRepository readingListItemsRepository, ILogger<ReadingListItemsController> logger)
         {
             _mediator = mediator;
+            _readingListItemsRepository = readingListItemsRepository;
             _logger = logger;
         }
 
@@ -68,6 +71,15 @@ namespace ChapterX.API.Controllers
             _logger.LogInformation("Deleting reading list item with ID: {ReadingListItemId}", id);
             var response = await _mediator.Send(new DeleteRequest(id));
             return Ok(response);
+        }
+
+        [HttpDelete("{listId:int}/story/{storyId:int}")]
+        [Authorize]
+        public async Task<ActionResult> DeleteByListAndStory(int listId, int storyId)
+        {
+            _logger.LogInformation("Removing story {StoryId} from list {ListId}", storyId, listId);
+            var deleted = await _readingListItemsRepository.DeleteByListAndStoryAsync(listId, storyId);
+            return deleted ? Ok() : NotFound();
         }
     }
 }

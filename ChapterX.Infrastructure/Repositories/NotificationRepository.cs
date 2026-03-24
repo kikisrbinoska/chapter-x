@@ -14,8 +14,9 @@ namespace ChapterX.Infrastructure.Repositories
         // Currently Notification is not linked directly to a User entity.
         // This method returns all notifications; adjust filter when a User relation is added.
         public async Task<IEnumerable<Notification>> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
-        {
-            return await _dbSet.ToListAsync(cancellationToken);
-        }
+            => await _dbSet
+                .Where(n => n.RecipientUserId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync(cancellationToken);
     }
 }

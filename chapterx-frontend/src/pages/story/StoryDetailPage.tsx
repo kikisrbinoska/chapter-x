@@ -22,6 +22,8 @@ export const StoryDetailPage: React.FC = () => {
   const { addToast } = useUIStore()
   const [listModalOpen, setListModalOpen] = useState(false)
   const [newListName, setNewListName] = useState('')
+  const [liveLikes, setLiveLikes] = useState<number | null>(null)
+  const [liveComments, setLiveComments] = useState<number | null>(null)
 
   const story = stories.find(s => s.story_id === Number(id))
   if (!story) {
@@ -152,7 +154,7 @@ export const StoryDetailPage: React.FC = () => {
         <div className="lg:col-span-2 space-y-8">
           {/* Action bar */}
           <div className="flex items-center gap-3 flex-wrap">
-            <LikeButton storyId={story.story_id} authorUserId={story.user_id} totalLikes={story.total_likes} />
+            <LikeButton storyId={story.story_id} authorUserId={story.user_id} totalLikes={story.total_likes} onCountChange={setLiveLikes} />
             {currentUser && (
               <Button variant="secondary" size="sm" onClick={() => setListModalOpen(true)}>
                 <BookmarkPlus size={14} />
@@ -182,7 +184,7 @@ export const StoryDetailPage: React.FC = () => {
 
           {/* Comments */}
           <div className="border-t border-slate-700 pt-8">
-            <CommentSection storyId={story.story_id} authorUserId={story.user_id} />
+            <CommentSection storyId={story.story_id} authorUserId={story.user_id} onCountChange={setLiveComments} />
           </div>
         </div>
 
@@ -202,7 +204,7 @@ export const StoryDetailPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Likes</span>
-                <span className="text-white">{story.total_likes.toLocaleString()}</span>
+                <span className="text-white">{(liveLikes ?? story.total_likes).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Views</span>
@@ -210,7 +212,7 @@ export const StoryDetailPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Comments</span>
-                <span className="text-white">{story.total_comments}</span>
+                <span className="text-white">{liveComments ?? story.total_comments}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Published</span>

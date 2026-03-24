@@ -13,6 +13,9 @@ namespace ChapterX.Domain.Entities
         public string Content { get; set; } = string.Empty;
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
+        public int? RecipientUserId { get; set; }
+        public string? Type { get; set; }
+        public string? Link { get; set; }
 
         public ICollection<ContentType> ContentTypes { get; set; } = [];
         public ICollection<Notify> Notifies { get; set; } = [];

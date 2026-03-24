@@ -1,5 +1,6 @@
 using ChapterX.Application.Notification.Commands;
 using ChapterX.Application.Notification.Queries;
+using ChapterX.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +13,42 @@ namespace ChapterX.API.Controllers
     public class NotificationsController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly INotificationRepository _notificationRepository;
         private readonly ILogger<NotificationsController> _logger;
 
-        public NotificationsController(IMediator mediator, ILogger<NotificationsController> logger)
+        public NotificationsController(IMediator mediator, INotificationRepository notificationRepository, ILogger<NotificationsController> logger)
         {
             _mediator = mediator;
+            _notificationRepository = notificationRepository;
             _logger = logger;
+        }
+
+        [HttpGet("user/{userId:int}")]
+        [Authorize]
+        public async Task<ActionResult> GetByUser(int userId)
+        {
+            var notifications = await _notificationRepository.GetByUserIdAsync(userId);
+            var result = notifications.Select(n => new
+            {
+                id = n.Id,
+                content = n.Content,
+                isRead = n.IsRead,
+                createdAt = n.CreatedAt,
+                type = n.Type ?? "info",
+                link = n.Link,
+            });
+            return Ok(result);
+        }
+
+        [HttpPut("{id:int}/read")]
+        [Authorize]
+        public async Task<ActionResult> MarkRead(int id)
+        {
+            var notification = await _notificationRepository.GetByIdAsync(id);
+            if (notification == null) return NotFound();
+            notification.IsRead = true;
+            await _notificationRepository.UpdateAsync(notification);
+            return Ok();
         }
 
         [HttpGet]

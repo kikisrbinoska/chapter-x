@@ -21,7 +21,10 @@ namespace ChapterX.Application.Notification.Commands
             {
                 Content = request.Content,
                 IsRead = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                RecipientUserId = request.RecipientUserId,
+                Type = request.Type,
+                Link = request.Link,
             };
 
             await _notificationRepository.AddAsync(notification, cancellationToken);

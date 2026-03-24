@@ -1,5 +1,6 @@
 using ChapterX.Application.Comment.Commands;
 using ChapterX.Application.Comment.Queries;
+using ChapterX.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +13,31 @@ namespace ChapterX.API.Controllers
     public class CommentsController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly ICommentRepository _commentRepository;
         private readonly ILogger<CommentsController> _logger;
 
-        public CommentsController(IMediator mediator, ILogger<CommentsController> logger)
+        public CommentsController(IMediator mediator, ICommentRepository commentRepository, ILogger<CommentsController> logger)
         {
             _mediator = mediator;
+            _commentRepository = commentRepository;
             _logger = logger;
+        }
+
+        [HttpGet("story/{storyId:int}")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetByStory(int storyId)
+        {
+            var comments = await _commentRepository.GetByStoryIdAsync(storyId);
+            var result = comments.Select(c => new
+            {
+                id = c.Id,
+                content = c.Content,
+                userId = c.UserId,
+                storyId = c.StoryId,
+                username = c.User?.Username ?? "",
+                createdAt = c.CreatedAt,
+            });
+            return Ok(result);
         }
 
         [HttpGet]

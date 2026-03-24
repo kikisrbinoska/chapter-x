@@ -20,7 +20,7 @@ namespace ChapterX.Application.Likes.Commands
             var like = new Domain.Entities.Likes
             {
                 UserId = request.UserId,
-                StoryId = request.ChapterId,
+                StoryId = request.StoryId,
                 CreatedAt = DateTime.UtcNow
             };
 

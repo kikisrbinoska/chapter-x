@@ -1,5 +1,6 @@
 using ChapterX.Application.ReadingList.Commands;
 using ChapterX.Application.ReadingList.Queries;
+using ChapterX.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +13,24 @@ namespace ChapterX.API.Controllers
     public class ReadingListsController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IReadingListRepository _readingListRepository;
         private readonly ILogger<ReadingListsController> _logger;
 
-        public ReadingListsController(IMediator mediator, ILogger<ReadingListsController> logger)
+        public ReadingListsController(IMediator mediator, IReadingListRepository readingListRepository, ILogger<ReadingListsController> logger)
         {
             _mediator = mediator;
+            _readingListRepository = readingListRepository;
             _logger = logger;
+        }
+
+        [HttpGet("user/{userId:int}")]
+        [Authorize]
+        public async Task<ActionResult> GetByUser(int userId)
+        {
+            _logger.LogInformation("Fetching reading lists for user {UserId}", userId);
+            var lists = await _readingListRepository.GetByUserIdAsync(userId);
+            var result = lists.Select(l => MapList(l));
+            return Ok(result);
         }
 
         [HttpGet]
@@ -25,9 +38,30 @@ namespace ChapterX.API.Controllers
         public async Task<ActionResult> GetAll()
         {
             _logger.LogInformation("Fetching all reading lists");
-            var response = await _mediator.Send(new GetAllRequest());
-            return Ok(response);
+            var lists = await _readingListRepository.GetAllAsync();
+            var result = lists.Select(l => MapList(l));
+            return Ok(result);
         }
+
+        private static object MapList(Domain.Entities.ReadingList l) => new
+        {
+            id = l.Id,
+            name = l.Name,
+            content = l.Content,
+            isPublic = l.IsPublic,
+            userId = l.UserId,
+            createdAt = l.CreatedAt,
+            username = l.User?.Username ?? "",
+            readingListItems = l.ReadingListItems.Select(i => new
+            {
+                listId = i.ListId,
+                storyId = i.StoryId,
+                addedAt = i.AddedAt,
+                storyTitle = i.Story?.ShortDescription ?? "",
+                authorUsername = i.Story?.Writer?.User?.Username ?? "",
+                genres = i.Story?.HasGenres.Select(hg => hg.Genre?.Name).Where(n => n != null).ToList() ?? []
+            }).ToList()
+        };
 
         [HttpGet("{id:int}")]
         [AllowAnonymous]

@@ -209,6 +209,9 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.Property(x => x.Content).HasColumnName("content");
                 e.Property(x => x.IsRead).HasColumnName("is_read");
                 e.Property(x => x.CreatedAt).HasColumnName("created_at");
+                e.Property(x => x.RecipientUserId).HasColumnName("recipient_user_id");
+                e.Property(x => x.Type).HasColumnName("type");
+                e.Property(x => x.Link).HasColumnName("link");
             });
 
             // CONTENT_TYPE

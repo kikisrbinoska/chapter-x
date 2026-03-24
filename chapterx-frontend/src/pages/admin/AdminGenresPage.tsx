@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, Tag } from 'lucide-react'
 import { useStoryStore } from '../../store/storyStore'
@@ -9,31 +9,37 @@ import { Genre } from '../../types'
 
 export const AdminGenresPage: React.FC = () => {
   const navigate = useNavigate()
-  const { genres, addGenre, deleteGenre } = useStoryStore()
+  const { genres, fetchGenres, addGenre, deleteGenre } = useStoryStore()
   const { addToast } = useUIStore()
   const [addOpen, setAddOpen] = useState(false)
   const [newName, setNewName] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Genre | null>(null)
 
-  const handleAdd = () => {
+  useEffect(() => { fetchGenres() }, [])
+
+  const handleAdd = async () => {
     if (!newName.trim()) return
     if (genres.some(g => g.name.toLowerCase() === newName.trim().toLowerCase())) {
       addToast('Genre already exists', 'error')
       return
     }
-    addGenre({ genre_id: Date.now(), name: newName.trim(), story_count: 0 })
-    addToast(`Genre "${newName.trim()}" added!`)
-    setNewName('')
-    setAddOpen(false)
+    try {
+      await addGenre(newName.trim())
+      addToast(`Genre "${newName.trim()}" added!`)
+      setNewName('')
+      setAddOpen(false)
+    } catch {
+      addToast('Failed to add genre', 'error')
+    }
   }
 
-  const handleDelete = (genre: Genre) => {
-    if (genre.story_count > 0) {
-      addToast('Cannot delete genre with associated stories', 'error')
-      return
+  const handleDelete = async (genre: Genre) => {
+    try {
+      await deleteGenre(genre.genre_id)
+      addToast(`Genre "${genre.name}" deleted`, 'info')
+    } catch {
+      addToast('Failed to delete genre', 'error')
     }
-    deleteGenre(genre.genre_id)
-    addToast(`Genre "${genre.name}" deleted`, 'info')
     setDeleteTarget(null)
   }
 

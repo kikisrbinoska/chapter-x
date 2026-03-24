@@ -13,8 +13,12 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { currentUser, logout } = useAuthStore()
-  const { notifications } = useNotificationStore()
+  const { notifications, fetchUserNotifications } = useNotificationStore()
   const unread = notifications.filter(n => !n.is_read).length
+
+  useEffect(() => {
+    if (currentUser) fetchUserNotifications(currentUser.user_id)
+  }, [currentUser?.user_id])
 
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -99,7 +103,7 @@ export const Navbar: React.FC = () => {
                 {/* Notification bell */}
                 <div className="relative" ref={notifRef}>
                   <button
-                    onClick={() => { setNotifOpen(!notifOpen); setUserMenuOpen(false) }}
+                    onClick={() => { const opening = !notifOpen; setNotifOpen(opening); setUserMenuOpen(false); if (opening && currentUser) fetchUserNotifications(currentUser.user_id) }}
                     className="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                   >
                     <Bell size={18} />

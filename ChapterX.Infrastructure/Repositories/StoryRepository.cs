@@ -11,6 +11,16 @@ namespace ChapterX.Infrastructure.Repositories
         {
         }
 
+        public override async Task<IEnumerable<Story>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(s => s.HasGenres)
+                    .ThenInclude(hg => hg.Genre)
+                .Include(s => s.Writer)
+                    .ThenInclude(w => w!.User)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<IEnumerable<Story>> GetByWriterIdAsync(int writerId, CancellationToken cancellationToken = default)
         {
             return await _dbSet

@@ -16,6 +16,17 @@ const typeIcon = (type: NotificationType) => {
   }
 }
 
+const typeTitle = (type: NotificationType) => {
+  switch (type) {
+    case 'like': return 'New Like'
+    case 'comment': return 'New Comment'
+    case 'collaboration': return 'Collaboration'
+    case 'follow': return 'New Follower'
+    case 'system': return 'System'
+    default: return 'Notification'
+  }
+}
+
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
@@ -68,7 +79,7 @@ export const NotificationDropdown: React.FC<Props> = ({ onClose }) => {
                 {typeIcon(n.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-white">{n.title}</p>
+                <p className="text-xs font-medium text-white">{typeTitle(n.type)}</p>
                 <p className="text-xs text-slate-400 line-clamp-2">{n.message}</p>
                 <p className="text-xs text-slate-600 mt-0.5">{timeAgo(n.created_at)}</p>
               </div>

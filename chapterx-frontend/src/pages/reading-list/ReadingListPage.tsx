@@ -11,11 +11,15 @@ import { GenreBadge } from '../../components/ui/Badge'
 export const ReadingListPage: React.FC = () => {
   const navigate = useNavigate()
   const { currentUser } = useAuthStore()
-  const { readingLists, fetchReadingLists, createReadingList, deleteReadingList, removeStoryFromList } = useStoryStore()
+  const { readingLists, fetchUserReadingLists, createReadingList, deleteReadingList, removeStoryFromList } = useStoryStore()
+  const [fetching, setFetching] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState<{ listId: number; storyId: number; title: string } | null>(null)
 
   useEffect(() => {
-    fetchReadingLists()
-  }, [])
+    if (!currentUser) return
+    setFetching(true)
+    fetchUserReadingLists(currentUser.user_id).finally(() => setFetching(false))
+  }, [currentUser?.user_id])
   const { addToast } = useUIStore()
   const [createOpen, setCreateOpen] = useState(false)
   const [newListName, setNewListName] = useState('')
@@ -32,7 +36,7 @@ export const ReadingListPage: React.FC = () => {
     )
   }
 
-  const myLists = readingLists.filter(l => l.user_id === currentUser.user_id)
+  const myLists = readingLists.filter(l => l.user_id === currentUser!.user_id)
 
   const handleCreate = async () => {
     if (!newListName.trim()) return
@@ -72,7 +76,12 @@ export const ReadingListPage: React.FC = () => {
         </Button>
       </div>
 
-      {myLists.length === 0 ? (
+      {fetching ? (
+        <div className="flex flex-col items-center py-20 text-slate-500">
+          <BookOpen size={48} className="mb-4 opacity-40 animate-pulse" />
+          <p className="text-sm">Loading your lists...</p>
+        </div>
+      ) : myLists.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-slate-500">
           <BookOpen size={48} className="mb-4 opacity-40" />
           <h3 className="text-lg font-medium text-white mb-2">No reading lists yet</h3>
@@ -123,24 +132,25 @@ export const ReadingListPage: React.FC = () => {
                 ) : (
                   <div className="space-y-2">
                     {list.stories.slice(0, 4).map(item => (
-                      <div key={item.item_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/50 group">
-                        <div className="flex-1 min-w-0">
+                      <div key={item.item_id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/50">
+                        <div className="flex-1 min-w-0 overflow-hidden">
                           <button
                             onClick={() => navigate(`/story/${item.story_id}`)}
-                            className="text-white text-sm font-medium hover:text-indigo-300 transition-colors truncate block text-left"
+                            className="text-white text-sm font-medium hover:text-indigo-300 transition-colors truncate block text-left w-full"
                           >
                             {item.story_title}
                           </button>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-slate-500 text-xs">by {item.author_username}</span>
+                            <span className="text-slate-500 text-xs truncate">by {item.author_username}</span>
                             {item.genres.slice(0, 1).map(g => <GenreBadge key={g} genre={g} />)}
                           </div>
                         </div>
                         <button
-                          onClick={() => removeStoryFromList(list.list_id, item.story_id)}
-                          className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-all"
+                          onClick={() => setConfirmRemove({ listId: list.list_id, storyId: item.story_id, title: item.story_title })}
+                          className="flex-shrink-0 text-slate-500 hover:text-rose-400 hover:bg-rose-400/10 transition-all p-1.5 rounded-lg"
+                          title="Remove from list"
                         >
-                          <X size={14} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     ))}
@@ -163,6 +173,24 @@ export const ReadingListPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Confirm remove modal */}
+      <Modal isOpen={!!confirmRemove} onClose={() => setConfirmRemove(null)} title="Remove Story">
+        <div className="space-y-4">
+          <p className="text-slate-300 text-sm">
+            Are you sure you want to remove <span className="text-white font-medium">"{confirmRemove?.title}"</span> from this list?
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" className="flex-1" onClick={() => setConfirmRemove(null)}>Cancel</Button>
+            <Button variant="danger" className="flex-1" onClick={async () => {
+              if (!confirmRemove) return
+              await removeStoryFromList(confirmRemove.listId, confirmRemove.storyId)
+              addToast('Story removed from list', 'info')
+              setConfirmRemove(null)
+            }}>Remove</Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Create modal */}
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} title="Create Reading List">
