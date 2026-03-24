@@ -31,7 +31,7 @@ export const CollaboratorManager: React.FC<CollaboratorManagerProps> = ({
   ownerId,
 }) => {
   const { collaborations, addCollaboration, removeCollaboration, updateCollaborationPermission } = useStoryStore()
-  const { allUsers } = useAuthStore()
+  const { allUsers, fetchAllUsers } = useAuthStore()
   const { addNotification } = useNotificationStore()
   const { addToast } = useUIStore()
 
@@ -42,7 +42,7 @@ export const CollaboratorManager: React.FC<CollaboratorManagerProps> = ({
 
   const storyCollabs = collaborations.filter(c => c.story_id === storyId)
   const collabUserIds = new Set(storyCollabs.map(c => c.user_id))
-  const availableUsers = allUsers.filter(u => u.user_id !== ownerId && !collabUserIds.has(u.user_id))
+  const availableUsers = allUsers.filter(u => u.user_id !== ownerId && !collabUserIds.has(u.user_id) && (u.role === 'writer' || u.role === 'admin'))
 
   const handleInvite = () => {
     const user = availableUsers.find(u => u.username === selectedUser)
@@ -61,10 +61,9 @@ export const CollaboratorManager: React.FC<CollaboratorManagerProps> = ({
     }
     addCollaboration(newCollab)
     addNotification({
-      user_id: user.user_id,
+      recipientUserId: user.user_id,
       type: 'collaboration',
-      title: 'Collaboration Invite',
-      message: `You've been invited to collaborate on "${storyTitle}" as ${selectedRole}.`,
+      content: `You've been invited to collaborate on "${storyTitle}" as ${selectedRole}.`,
       link: `/story/${storyId}`,
     })
     addToast(`${user.username} added as collaborator!`)
@@ -85,7 +84,7 @@ export const CollaboratorManager: React.FC<CollaboratorManagerProps> = ({
           <h3 className="text-white font-semibold">Collaborators</h3>
           <span className="text-xs text-slate-500">({storyCollabs.length})</span>
         </div>
-        <Button size="sm" onClick={() => setInviteOpen(true)}>
+        <Button size="sm" onClick={() => { fetchAllUsers(); setInviteOpen(true) }}>
           <UserPlus size={14} />
           Invite
         </Button>
@@ -148,7 +147,7 @@ export const CollaboratorManager: React.FC<CollaboratorManagerProps> = ({
               <option value="">-- Choose a user --</option>
               {availableUsers.map(u => (
                 <option key={u.user_id} value={u.username}>
-                  @{u.username} ({u.role})
+                  @{u.username}
                 </option>
               ))}
             </select>

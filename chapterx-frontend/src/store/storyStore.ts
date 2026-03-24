@@ -72,6 +72,7 @@ interface StoryStore {
   // Fetch from backend
   fetchStories: () => Promise<void>
   fetchChapters: () => Promise<void>
+  fetchCollaborations: () => Promise<void>
   fetchReadingLists: () => Promise<void>
   fetchUserReadingLists: (userId: number) => Promise<void>
   fetchGenres: () => Promise<void>
@@ -97,9 +98,9 @@ interface StoryStore {
   isLiked: (userId: number, storyId: number) => boolean
 
   // Collaboration actions
-  addCollaboration: (collab: Collaboration) => void
+  addCollaboration: (collab: Collaboration) => Promise<void>
   updateCollaborationPermission: (userId: number, storyId: number, level: PermissionLevel) => void
-  removeCollaboration: (userId: number, storyId: number) => void
+  removeCollaboration: (userId: number, storyId: number) => Promise<void>
 
   // AI Suggestion actions
   fetchSuggestions: () => Promise<void>
@@ -174,6 +175,27 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
       if (chapters.length > 0) set({ chapters })
     } catch {
       // keep mock data on failure
+    }
+  },
+
+  fetchCollaborations: async () => {
+    try {
+      const res = await axios.get(`${API}/collaborations`)
+      const data: any[] = res.data ?? []
+      const collaborations: Collaboration[] = data.map((c: any) => ({
+        collab_id: c.id,
+        story_id: c.storyId,
+        user_id: c.userId,
+        username: c.username ?? '',
+        name: c.name ?? c.username ?? '',
+        story_title: '',
+        role: 'editor' as any,
+        permission_level: 3 as any,
+        joined_at: c.createdAt,
+      }))
+      set({ collaborations })
+    } catch {
+      // keep existing
     }
   },
 
@@ -363,8 +385,18 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
   isLiked: (userId, storyId) =>
     get().likedStories.some(l => l.userId === userId && l.storyId === storyId),
 
-  addCollaboration: (collab) =>
-    set(state => ({ collaborations: [...state.collaborations, collab] })),
+  addCollaboration: async (collab) => {
+    set(state => ({ collaborations: [...state.collaborations, collab] }))
+    try {
+      await axios.post(`${API}/collaborations`, {
+        userId: collab.user_id,
+        storyId: collab.story_id,
+        role: collab.role,
+      }, { headers: getAuthHeaders() })
+    } catch {
+      // keep optimistic
+    }
+  },
 
   updateCollaborationPermission: (userId, storyId, level) =>
     set(state => ({
@@ -375,12 +407,18 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
       ),
     })),
 
-  removeCollaboration: (userId, storyId) =>
+  removeCollaboration: async (userId, storyId) => {
     set(state => ({
       collaborations: state.collaborations.filter(
         c => !(c.user_id === userId && c.story_id === storyId)
       ),
-    })),
+    }))
+    try {
+      await axios.delete(`${API}/collaborations/user/${userId}/story/${storyId}`, { headers: getAuthHeaders() })
+    } catch {
+      // keep optimistic
+    }
+  },
 
   fetchSuggestions: async () => {
     try {

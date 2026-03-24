@@ -101,6 +101,7 @@ export const StoryDetailPage: React.FC = () => {
   }
 
   const isOwner = currentUser?.user_id === story.user_id
+  const isCollaborator = currentUser ? storyCollabs.some(c => c.user_id === currentUser.user_id) : false
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -161,7 +162,7 @@ export const StoryDetailPage: React.FC = () => {
                 Save to List
               </Button>
             )}
-            {isOwner && (
+            {(isOwner || isCollaborator) && (
               <Button variant="ghost" size="sm" onClick={() => navigate(`/writer/edit-story/${story.story_id}`)}>
                 Edit Story
               </Button>
@@ -172,7 +173,7 @@ export const StoryDetailPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-serif text-xl font-bold text-white">Chapters</h2>
-              {isOwner && (
+              {(isOwner || isCollaborator) && (
                 <Button size="sm" onClick={() => navigate(`/writer/create-chapter/${story.story_id}`)}>
                   <Plus size={14} />
                   Add Chapter

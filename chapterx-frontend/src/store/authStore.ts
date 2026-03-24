@@ -18,6 +18,7 @@ interface AuthStore {
   setShowMatureContent: (show: boolean) => void
   updateUserRole: (userId: number, role: UserRole) => void
   addUser: (user: User) => void
+  fetchAllUsers: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -134,6 +135,27 @@ export const useAuthStore = create<AuthStore>()(
 
       addUser: (user: User) =>
         set(state => ({ allUsers: [...state.allUsers, user] })),
+
+      fetchAllUsers: async () => {
+        try {
+          const res = await axios.get(`${API_BASE}/users`)
+          const data: any[] = res.data?.users ?? res.data ?? []
+          const users: User[] = data.map((u: any) => ({
+            user_id: u.id,
+            username: u.username,
+            email: u.email ?? '',
+            name: u.name ?? u.username,
+            surname: u.surname ?? '',
+            role: (u.role ?? 'regular') as UserRole,
+            created_at: u.createdAt ?? new Date().toISOString(),
+            follower_count: 0,
+            following_count: 0,
+          }))
+          set({ allUsers: users })
+        } catch {
+          // keep existing
+        }
+      },
     }),
     {
       name: 'chapterx-auth',

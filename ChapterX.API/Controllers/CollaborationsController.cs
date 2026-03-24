@@ -1,5 +1,6 @@
 using ChapterX.Application.Collaboration.Commands;
 using ChapterX.Application.Collaboration.Queries;
+using ChapterX.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,13 @@ namespace ChapterX.API.Controllers
     public class CollaborationsController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly ICollaborationRepository _collaborationRepository;
         private readonly ILogger<CollaborationsController> _logger;
 
-        public CollaborationsController(IMediator mediator, ILogger<CollaborationsController> logger)
+        public CollaborationsController(IMediator mediator, ICollaborationRepository collaborationRepository, ILogger<CollaborationsController> logger)
         {
             _mediator = mediator;
+            _collaborationRepository = collaborationRepository;
             _logger = logger;
         }
 
@@ -25,8 +28,26 @@ namespace ChapterX.API.Controllers
         public async Task<ActionResult> GetAll()
         {
             _logger.LogInformation("Fetching all collaborations");
-            var response = await _mediator.Send(new GetAllRequest());
-            return Ok(response);
+            var collabs = await _collaborationRepository.GetAllAsync();
+            var result = collabs.Select(c => new
+            {
+                id = c.Id,
+                userId = c.UserId,
+                storyId = c.StoryId,
+                username = c.User != null ? c.User.Username : "",
+                name = c.User != null ? c.User.Name : "",
+                createdAt = c.CreatedAt,
+            });
+            return Ok(result);
+        }
+
+        [HttpDelete("user/{userId:int}/story/{storyId:int}")]
+        [Authorize]
+        public async Task<ActionResult> DeleteByUserAndStory(int userId, int storyId)
+        {
+            var deleted = await _collaborationRepository.DeleteByUserAndStoryAsync(userId, storyId);
+            if (!deleted) return NotFound();
+            return Ok();
         }
 
         [HttpGet("{id:int}")]

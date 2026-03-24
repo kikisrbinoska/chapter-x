@@ -26,7 +26,16 @@ namespace ChapterX.API.Controllers
         {
             _logger.LogInformation("Fetching all users");
             var response = await _mediator.Send(new GetAllRequest());
-            return Ok(response);
+            var result = response.Users.Select(u => new
+            {
+                id = u.Id,
+                username = u.Username,
+                name = u.Name,
+                surname = u.Surname,
+                email = u.Email,
+                role = u.Admin != null ? "admin" : u.Writer != null ? "writer" : "regular",
+            });
+            return Ok(result);
         }
 
         [HttpGet("{id:int}")]

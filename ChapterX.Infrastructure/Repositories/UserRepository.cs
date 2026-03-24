@@ -11,6 +11,12 @@ namespace ChapterX.Infrastructure.Repositories
         {
         }
 
+        public override async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default)
+            => await _dbSet
+                .Include(u => u.Admin)
+                .Include(u => u.Writer)
+                .ToListAsync(cancellationToken);
+
         public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
             => await _dbSet
                 .Include(u => u.Admin)

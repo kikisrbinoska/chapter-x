@@ -21,12 +21,16 @@ function timeAgo(str: string): string {
 export const WriterDashboard: React.FC = () => {
   const navigate = useNavigate()
   const { currentUser } = useAuthStore()
-  const { stories } = useStoryStore()
+  const { stories, collaborations } = useStoryStore()
   const { notifications } = useNotificationStore()
 
   if (!currentUser) return null
 
-  const myStories = stories.filter(s => s.user_id === currentUser.user_id)
+  const ownedStories = stories.filter(s => s.user_id === currentUser.user_id)
+  const collabStoryIds = new Set(collaborations.filter(c => c.user_id === currentUser.user_id).map(c => c.story_id))
+  const collabStories = stories.filter(s => collabStoryIds.has(s.story_id))
+  const myStories = ownedStories
+  const allDashboardStories = [...ownedStories, ...collabStories]
   const published = myStories.filter(s => s.status === 'published')
   const drafts = myStories.filter(s => s.status === 'draft')
   const totalViews = myStories.reduce((acc, s) => acc + s.total_views, 0)
@@ -75,7 +79,7 @@ export const WriterDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-serif text-xl font-bold text-white">My Stories</h2>
           </div>
-          {myStories.length === 0 ? (
+          {allDashboardStories.length === 0 ? (
             <div className="bg-slate-800 border border-slate-700 rounded-2xl p-12 text-center">
               <BookOpen size={40} className="mx-auto mb-4 text-slate-600" />
               <h3 className="text-white font-medium mb-2">No stories yet</h3>
@@ -87,26 +91,35 @@ export const WriterDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {myStories.map(story => (
-                <div key={story.story_id} className="flex items-center gap-4 p-4 bg-slate-800 border border-slate-700 rounded-xl hover:border-indigo-500/40 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-medium text-sm truncate">{story.title}</h3>
-                      <StatusBadge status={story.status} />
+              {allDashboardStories.map(story => {
+                const isCollab = collabStoryIds.has(story.story_id)
+                return (
+                  <div key={story.story_id} className="flex items-center gap-4 p-4 bg-slate-800 border border-slate-700 rounded-xl hover:border-indigo-500/40 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-white font-medium text-sm truncate">{story.title}</h3>
+                        <StatusBadge status={story.status} />
+                        {isCollab && (
+                          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30">
+                            Collaborator
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-slate-500 text-xs">
+                        {isCollab && <span className="text-slate-500">by {story.author_username}</span>}
+                        <span className="flex items-center gap-1"><Eye size={11} /> {story.total_views.toLocaleString()}</span>
+                        <span className="flex items-center gap-1"><Heart size={11} /> {story.total_likes}</span>
+                        <span className="flex items-center gap-1"><MessageCircle size={11} /> {story.total_comments}</span>
+                        <span>{story.total_chapters} chapters</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-slate-500 text-xs">
-                      <span className="flex items-center gap-1"><Eye size={11} /> {story.total_views.toLocaleString()}</span>
-                      <span className="flex items-center gap-1"><Heart size={11} /> {story.total_likes}</span>
-                      <span className="flex items-center gap-1"><MessageCircle size={11} /> {story.total_comments}</span>
-                      <span>{story.total_chapters} chapters</span>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => navigate(`/story/${story.story_id}`)}>View</Button>
+                      <Button size="sm" variant="secondary" onClick={() => navigate(`/writer/edit-story/${story.story_id}`)}>Edit</Button>
                     </div>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button size="sm" variant="ghost" onClick={() => navigate(`/story/${story.story_id}`)}>View</Button>
-                    <Button size="sm" variant="secondary" onClick={() => navigate(`/writer/edit-story/${story.story_id}`)}>Edit</Button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

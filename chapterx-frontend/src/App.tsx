@@ -51,7 +51,6 @@ const ProtectedRoute = ({
   const { addToast } = useUIStore()
 
   if (!currentUser) {
-    addToast('Please sign in to access this page.', 'warning')
     return <Navigate to="/login" replace />
   }
 
@@ -67,11 +66,12 @@ const ProtectedRoute = ({
 }
 
 function App() {
-  const { fetchStories, fetchChapters, fetchReadingLists } = useStoryStore()
+  const { fetchStories, fetchChapters, fetchCollaborations, fetchReadingLists } = useStoryStore()
 
   useEffect(() => {
     fetchStories()
     fetchChapters()
+    fetchCollaborations()
     fetchReadingLists()
   }, [])
 
