@@ -1,0 +1,16 @@
+{
+  "ConnectionStrings": {
+    "Database": "Host=localhost;Port=5432;Database=your_db;User Id=your_user;Password=your_password;SSL Mode=Disable"
+  },
+  "Jwt": {
+    "Key": "your-secret-key-at-least-32-characters-long!!",
+    "Issuer": "ChapterX",
+    "Audience": "ChapterX"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
