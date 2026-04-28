@@ -1,6 +1,7 @@
 using ChapterX.Application.Abstractions;
 using ChapterX.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ChapterX.Infrastructure.Data.DataContext
 {
@@ -30,6 +31,9 @@ namespace ChapterX.Infrastructure.Data.DataContext
         public DbSet<Roles> Roles { get; init; }
         public DbSet<PermissionLevel> PermissionLevels { get; init; }
 
+        public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+            => Database.BeginTransactionAsync(cancellationToken);
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -42,11 +46,11 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.Property(x => x.Id).HasColumnName("user_id");
                 e.Property(x => x.Username).HasColumnName("username");
                 e.Property(x => x.Email).HasColumnName("email");
-                e.Property(x => x.Name).HasColumnName("name");
+                e.Property(x => x.Name).HasColumnName("user_name");
                 e.Property(x => x.Surname).HasColumnName("surname");
                 e.Property(x => x.Password).HasColumnName("password");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
-                e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+                e.Property(x => x.CreatedAt).HasColumnName("user_created_at");
+                e.Property(x => x.UpdatedAt).HasColumnName("user_updated_at");
             });
 
             // ADMINS
@@ -85,10 +89,10 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.Property(x => x.MatureContent).HasColumnName("mature_content");
                 e.Property(x => x.ShortDescription).HasColumnName("short_description");
                 e.Property(x => x.Image).HasColumnName("image");
-                e.Property(x => x.Content).HasColumnName("content");
+                e.Property(x => x.Content).HasColumnName("story_content");
                 e.Property(x => x.UserId).HasColumnName("user_id");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
-                e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+                e.Property(x => x.CreatedAt).HasColumnName("story_created_at");
+                e.Property(x => x.UpdatedAt).HasColumnName("story_updated_at");
                 e.HasOne(x => x.Writer).WithMany(w => w.Stories).HasForeignKey(x => x.UserId);
             });
 
@@ -112,14 +116,14 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.Property(x => x.Number).HasColumnName("chapter_number");
                 e.Property(x => x.Name).HasColumnName("chapter_name");
                 e.Property(x => x.Title).HasColumnName("title");
-                e.Property(x => x.Content).HasColumnName("content");
+                e.Property(x => x.Content).HasColumnName("chapter_content");
                 e.Property(x => x.WordCount).HasColumnName("word_count");
                 e.Property(x => x.Rating).HasColumnName("rating");
                 e.Property(x => x.PublishedAt).HasColumnName("published_at");
                 e.Property(x => x.ViewCount).HasColumnName("view_count");
                 e.Property(x => x.StoryId).HasColumnName("story_id");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
-                e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+                e.Property(x => x.CreatedAt).HasColumnName("chapter_created_at");
+                e.Property(x => x.UpdatedAt).HasColumnName("chapter_updated_at");
                 e.HasOne(x => x.Story).WithMany(s => s.Chapters).HasForeignKey(x => x.StoryId);
             });
 
@@ -129,7 +133,7 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.ToTable("genre");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).HasColumnName("genre_id");
-                e.Property(x => x.Name).HasColumnName("name");
+                e.Property(x => x.Name).HasColumnName("genre_name");
             });
 
             // HAS_GENRE
@@ -152,7 +156,7 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.Ignore(x => x.Id);
                 e.Property(x => x.UserId).HasColumnName("user_id");
                 e.Property(x => x.StoryId).HasColumnName("story_id");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
+                e.Property(x => x.CreatedAt).HasColumnName("like_created_at");
                 e.HasOne(x => x.User).WithMany(u => u.Likes).HasForeignKey(x => x.UserId);
                 e.HasOne(x => x.Story).WithMany(s => s.Likes).HasForeignKey(x => x.StoryId);
             });
@@ -163,11 +167,11 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.ToTable("comment");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).HasColumnName("comment_id");
-                e.Property(x => x.Content).HasColumnName("content");
+                e.Property(x => x.Content).HasColumnName("comment_content");
                 e.Property(x => x.UserId).HasColumnName("user_id");
                 e.Property(x => x.StoryId).HasColumnName("story_id");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
-                e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+                e.Property(x => x.CreatedAt).HasColumnName("comment_created_at");
+                e.Property(x => x.UpdatedAt).HasColumnName("comment_updated_at");
                 e.HasOne(x => x.User).WithMany(u => u.Comments).HasForeignKey(x => x.UserId);
                 e.HasOne(x => x.Story).WithMany(s => s.Comments).HasForeignKey(x => x.StoryId);
             });
@@ -178,8 +182,8 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.ToTable("reading_list");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).HasColumnName("list_id");
-                e.Property(x => x.Name).HasColumnName("name");
-                e.Property(x => x.Content).HasColumnName("content");
+                e.Property(x => x.Name).HasColumnName("list_name");
+                e.Property(x => x.Content).HasColumnName("list_content");
                 e.Property(x => x.IsPublic).HasColumnName("is_public");
                 e.Property(x => x.UserId).HasColumnName("user_id");
                 e.Property(x => x.CreatedAt).HasColumnName("created_at");
@@ -206,9 +210,9 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.ToTable("notification");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).HasColumnName("notification_id");
-                e.Property(x => x.Content).HasColumnName("content");
+                e.Property(x => x.Content).HasColumnName("notification_content");
                 e.Property(x => x.IsRead).HasColumnName("is_read");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
+                e.Property(x => x.CreatedAt).HasColumnName("notification_created_at");
                 e.Property(x => x.RecipientUserId).HasColumnName("recipient_user_id");
                 e.Property(x => x.Type).HasColumnName("type");
                 e.Property(x => x.Link).HasColumnName("link");
@@ -248,7 +252,7 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.Property(x => x.OriginalText).HasColumnName("original_text");
                 e.Property(x => x.SuggestedText).HasColumnName("suggested_text");
                 e.Property(x => x.Accepted).HasColumnName("accepted");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
+                e.Property(x => x.CreatedAt).HasColumnName("suggestion_created_at");
                 e.Property(x => x.AppliedAt).HasColumnName("applied_at");
                 e.Property(x => x.StoryId).HasColumnName("story_id");
                 e.HasOne(x => x.Story).WithMany(s => s.AISuggestions).HasForeignKey(x => x.StoryId);
@@ -287,7 +291,7 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.Ignore(x => x.Id);
                 e.Property(x => x.UserId).HasColumnName("user_id");
                 e.Property(x => x.StoryId).HasColumnName("story_id");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
+                e.Property(x => x.CreatedAt).HasColumnName("collab_created_at");
                 e.HasOne(x => x.User).WithMany(u => u.Collaborations).HasForeignKey(x => x.UserId);
                 e.HasOne(x => x.Story).WithMany(s => s.Collaborations).HasForeignKey(x => x.StoryId);
             });

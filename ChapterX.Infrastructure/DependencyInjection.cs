@@ -14,8 +14,22 @@ namespace ChapterX.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("Database")));
+            var poolSection = configuration.GetSection("ConnectionPool");
+            var minPoolSize = poolSection.GetValue<int>("MinPoolSize", 1);
+            var maxPoolSize = poolSection.GetValue<int>("MaxPoolSize", 20);
+            var idleLifetime = poolSection.GetValue<int>("ConnectionIdleLifetime", 300);
+            var pruningInterval = poolSection.GetValue<int>("ConnectionPruningInterval", 10);
+            var commandTimeout = poolSection.GetValue<int>("CommandTimeout", 30);
+            var connectionTimeout = poolSection.GetValue<int>("Timeout", 15);
+
+            var baseConnectionString = configuration.GetConnectionString("Database")!;
+            var connectionString =
+                $"{baseConnectionString};Minimum Pool Size={minPoolSize};Maximum Pool Size={maxPoolSize};" +
+                $"Connection Idle Lifetime={idleLifetime};Connection Pruning Interval={pruningInterval};" +
+                $"Command Timeout={commandTimeout};Timeout={connectionTimeout}";
+
+            services.AddDbContextPool<ApplicationDbContext>(options =>
+                options.UseNpgsql(connectionString));
 
             services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
             services.AddScoped<IJwtTokenService, JwtTokenService>();

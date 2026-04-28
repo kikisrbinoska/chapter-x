@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using UserEntity = ChapterX.Domain.Entities.User;
 using StoryEntity = ChapterX.Domain.Entities.Story;
 using ChapterEntity = ChapterX.Domain.Entities.Chapter;
@@ -39,5 +40,6 @@ namespace ChapterX.Application.Abstractions
         DbSet<HasGenreEntity> HasGenres { get; }
         DbSet<NeedApprovalEntity> NeedApprovals { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+        Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
     }
 }
