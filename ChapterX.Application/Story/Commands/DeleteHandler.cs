@@ -21,6 +21,9 @@ namespace ChapterX.Application.Story.Commands
             if (story is null)
                 return new DeleteResponse(false);
 
+            if (story.UserId != request.CallerId)
+                throw new UnauthorizedAccessException("You do not own this story.");
+
             await _storyRepository.DeleteAsync(story, cancellationToken);
 
             return new DeleteResponse(true);

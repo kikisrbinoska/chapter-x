@@ -7,6 +7,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.StartsWith("change-this"))
+    throw new InvalidOperationException("Jwt:Key is not configured. Set it via environment variable DOTNET_Jwt__Key before starting the application.");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
@@ -84,6 +88,8 @@ app.UseExceptionHandler(err => err.Run(async ctx =>
     var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
     ctx.Response.ContentType = "application/json";
 
+    var logger = ctx.RequestServices.GetRequiredService<ILogger<Program>>();
+
     string message;
     int status;
 
@@ -106,12 +112,16 @@ app.UseExceptionHandler(err => err.Run(async ctx =>
         else if (inner.Contains("unique") || inner.Contains("duplicate") || inner.Contains("23505"))
             message = "A user with this email or username already exists.";
         else
-            message = "Database error: " + inner;
+        {
+            logger.LogError(dbEx, "Unhandled database error");
+            message = "A database error occurred. Please try again.";
+        }
     }
     else
     {
+        logger.LogError(ex, "Unhandled exception");
         status = 500;
-        message = ex?.Message ?? "An error occurred.";
+        message = "An unexpected error occurred.";
     }
 
     ctx.Response.StatusCode = status;

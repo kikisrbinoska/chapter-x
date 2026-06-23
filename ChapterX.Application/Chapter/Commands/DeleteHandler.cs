@@ -17,9 +17,12 @@ namespace ChapterX.Application.Chapter.Commands
 
         public async Task<DeleteResponse> Handle(DeleteRequest request, CancellationToken cancellationToken)
         {
-            var chapter = await _chapterRepository.GetByIdAsync(request.Id, cancellationToken);
+            var chapter = await _chapterRepository.GetByIdWithStoryAsync(request.Id, cancellationToken);
             if (chapter is null)
                 return new DeleteResponse(false);
+
+            if (chapter.Story.UserId != request.CallerId)
+                throw new UnauthorizedAccessException("You do not own this chapter.");
 
             await _chapterRepository.DeleteAsync(chapter, cancellationToken);
 

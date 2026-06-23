@@ -21,6 +21,9 @@ namespace ChapterX.Application.Story.Commands
             if (story is null)
                 return new UpdateResponse(false);
 
+            if (story.UserId != request.CallerId)
+                throw new UnauthorizedAccessException("You do not own this story.");
+
             story.MatureContent = request.MatureContent;
             story.ShortDescription = request.ShortDescription;
             story.Image = request.Image;

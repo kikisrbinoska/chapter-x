@@ -8,6 +8,7 @@ namespace ChapterX.Application.Chapter.Commands
         string Name,
         string Title,
         string Content,
-        int? WordCount
+        int? WordCount,
+        int CallerId = 0
     ) : IRequest<UpdateResponse>;
 }

@@ -39,7 +39,7 @@ namespace ChapterX.API.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> Add([FromBody] AddRequest request)
         {
             _logger.LogInformation("Adding a new admin for UserId: {UserId}", request.UserId);
@@ -48,7 +48,7 @@ namespace ChapterX.API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> Update(int id, [FromBody] UpdateRequest request)
         {
             _logger.LogInformation("Updating admin with ID: {AdminId}", id);
@@ -62,7 +62,7 @@ namespace ChapterX.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> Delete(int id)
         {
             _logger.LogInformation("Deleting admin with ID: {AdminId}", id);

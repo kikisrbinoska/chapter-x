@@ -21,6 +21,9 @@ namespace ChapterX.Application.Comment.Commands
             if (comment is null)
                 return new DeleteResponse(false);
 
+            if (comment.UserId != request.CallerId)
+                throw new UnauthorizedAccessException("You do not own this comment.");
+
             await _commentRepository.DeleteAsync(comment, cancellationToken);
 
             return new DeleteResponse(true);

@@ -23,5 +23,12 @@ namespace ChapterX.Infrastructure.Repositories
                 .Where(c => c.StoryId == storyId)
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<Chapter?> GetByIdWithStoryAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(c => c.Story)
+                .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        }
     }
 }

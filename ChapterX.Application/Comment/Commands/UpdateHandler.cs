@@ -21,6 +21,9 @@ namespace ChapterX.Application.Comment.Commands
             if (comment is null)
                 return new UpdateResponse(false);
 
+            if (comment.UserId != request.CallerId)
+                throw new UnauthorizedAccessException("You do not own this comment.");
+
             comment.Content = request.Content;
             comment.UpdatedAt = DateTime.UtcNow;
 

@@ -4,6 +4,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace ChapterX.API.Controllers
 {
@@ -66,6 +68,11 @@ namespace ChapterX.API.Controllers
                 return BadRequest("Route ID and body ID must match.");
             }
 
+            var callerId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+            var isAdmin = User.IsInRole("Admin");
+            if (callerId != id && !isAdmin)
+                return Forbid();
+
             var response = await _mediator.Send(request);
             return Ok(response);
         }
@@ -75,6 +82,11 @@ namespace ChapterX.API.Controllers
         public async Task<ActionResult> Delete(int id)
         {
             _logger.LogInformation("Deleting user with ID: {UserId}", id);
+            var callerId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+            var isAdmin = User.IsInRole("Admin");
+            if (callerId != id && !isAdmin)
+                return Forbid();
+
             var response = await _mediator.Send(new DeleteRequest(id));
             return Ok(response);
         }
