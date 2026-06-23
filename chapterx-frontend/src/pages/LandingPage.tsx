@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Feather, Star, BookOpen, Users, Sparkles, ArrowRight, ChevronRight } from 'lucide-react'
+import { Feather, BookOpen, Users, Sparkles, ArrowRight, ChevronRight } from 'lucide-react'
 import logo from '../assets/chapterX-removebg-preview.png'
 import { useStoryStore } from '../store/storyStore'
 import { useAuthStore } from '../store/authStore'
@@ -33,11 +33,6 @@ export const LandingPage: React.FC = () => {
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl" />
 
         <div className="relative max-w-7xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-indigo-300 mb-8 border border-indigo-500/20">
-            <Star size={14} className="text-amber-400 fill-amber-400" />
-            The collaborative storytelling platform
-          </div>
-
           <div className="flex justify-center mb-6">
             <img src={logo} alt="ChapterX" className="h-32 w-32 object-contain" />
           </div>

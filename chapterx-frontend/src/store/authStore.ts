@@ -17,6 +17,7 @@ interface AuthStore {
   switchUser: (userId: number) => void
   setShowMatureContent: (show: boolean) => void
   updateUserRole: (userId: number, role: UserRole) => void
+  updateUser: (userId: number, data: { username: string; email: string; name: string; surname: string }) => Promise<void>
   addUser: (user: User) => void
   fetchAllUsers: () => Promise<void>
 }
@@ -65,7 +66,7 @@ export const useAuthStore = create<AuthStore>()(
           u => u.username === emailOrUsername || u.email === emailOrUsername
         )
         if (!user) throw new Error('User not found. Try using a quick-login option.')
-        set({ currentUser: user, token: 'mock-token' })
+        set({ currentUser: user, token: null })
       },
 
       logout: () => set({ currentUser: null, token: null }),
@@ -109,7 +110,7 @@ export const useAuthStore = create<AuthStore>()(
         set(state => ({
           allUsers: [...state.allUsers, newUser],
           currentUser: newUser,
-          token: 'mock-token',
+          token: null,
         }))
       },
 
@@ -119,7 +120,7 @@ export const useAuthStore = create<AuthStore>()(
           return
         }
         const user = get().allUsers.find(u => u.user_id === userId)
-        if (user) set({ currentUser: user, token: 'mock-token' })
+        if (user) set({ currentUser: user, token: null })
       },
 
       setShowMatureContent: (show: boolean) => set({ showMatureContent: show }),
@@ -132,6 +133,17 @@ export const useAuthStore = create<AuthStore>()(
               ? { ...state.currentUser, role }
               : state.currentUser,
         })),
+
+      updateUser: async (userId, data) => {
+        const { token } = get()
+        await axios.put(`${API_BASE}/users/${userId}`, { id: userId, ...data }, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        set(state => ({
+          allUsers: state.allUsers.map(u => u.user_id === userId ? { ...u, ...data } : u),
+          currentUser: state.currentUser?.user_id === userId ? { ...state.currentUser, ...data } : state.currentUser,
+        }))
+      },
 
       addUser: (user: User) =>
         set(state => ({ allUsers: [...state.allUsers, user] })),

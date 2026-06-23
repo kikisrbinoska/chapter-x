@@ -405,16 +405,16 @@ It wasn't forgiveness. It wasn't even close to forgiveness. But it was, Lyra tho
 ]
 
 export const mockGenres: Genre[] = [
-  { genre_id: 1, name: 'Fantasy', story_count: 4 },
-  { genre_id: 2, name: 'Adventure', story_count: 2 },
-  { genre_id: 3, name: 'Romance', story_count: 3 },
-  { genre_id: 4, name: 'Sci-Fi', story_count: 1 },
-  { genre_id: 5, name: 'Historical Fiction', story_count: 2 },
-  { genre_id: 6, name: 'Thriller', story_count: 1 },
-  { genre_id: 7, name: 'Mystery', story_count: 0 },
-  { genre_id: 8, name: 'Horror', story_count: 0 },
-  { genre_id: 9, name: 'Contemporary', story_count: 0 },
-  { genre_id: 10, name: 'Poetry', story_count: 0 },
+  { genre_id: 1, name: 'Fantasy' },
+  { genre_id: 2, name: 'Adventure' },
+  { genre_id: 3, name: 'Romance' },
+  { genre_id: 4, name: 'Sci-Fi' },
+  { genre_id: 5, name: 'Historical Fiction' },
+  { genre_id: 6, name: 'Thriller' },
+  { genre_id: 7, name: 'Mystery' },
+  { genre_id: 8, name: 'Horror' },
+  { genre_id: 9, name: 'Contemporary' },
+  { genre_id: 10, name: 'Poetry' },
 ]
 
 export const mockReadingLists: ReadingList[] = [

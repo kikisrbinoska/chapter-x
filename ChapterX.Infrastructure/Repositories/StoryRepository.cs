@@ -18,6 +18,9 @@ namespace ChapterX.Infrastructure.Repositories
                     .ThenInclude(hg => hg.Genre)
                 .Include(s => s.Writer)
                     .ThenInclude(w => w!.User)
+                .Include(s => s.Likes)
+                .Include(s => s.Comments)
+                .Include(s => s.Chapters)
                 .ToListAsync(cancellationToken);
         }
 

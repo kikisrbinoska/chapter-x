@@ -9,7 +9,6 @@ const sortOptions = [
   { value: 'popular', label: 'Most Popular' },
   { value: 'recent', label: 'Most Recent' },
   { value: 'views', label: 'Most Viewed' },
-  { value: 'comments', label: 'Most Discussed' },
 ]
 
 const allGenres = ['Fantasy', 'Sci-Fi', 'Romance', 'Historical Fiction', 'Adventure', 'Thriller', 'Mystery', 'Horror', 'Contemporary', 'Poetry']
@@ -25,7 +24,7 @@ export const BrowsePage: React.FC = () => {
   const filtered = useMemo(() => {
     let list = stories.filter(s => s.status === 'published')
 
-    if (!showMatureContent && !currentUser) {
+    if (!showMatureContent) {
       list = list.filter(s => !s.mature_content)
     }
 
@@ -46,8 +45,7 @@ export const BrowsePage: React.FC = () => {
       case 'popular': return [...list].sort((a, b) => b.total_likes - a.total_likes)
       case 'recent': return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       case 'views': return [...list].sort((a, b) => b.total_views - a.total_views)
-      case 'comments': return [...list].sort((a, b) => b.total_comments - a.total_comments)
-      default: return list
+default: return list
     }
   }, [stories, search, selectedGenres, sort, showMatureContent, currentUser])
 

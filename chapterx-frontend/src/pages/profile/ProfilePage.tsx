@@ -1,23 +1,67 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { BookOpen, Heart, Users, Calendar, MessageCircle, Eye } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useStoryStore } from '../../store/storyStore'
+import { useUIStore } from '../../store/uiStore'
 import { Avatar } from '../../components/ui/Avatar'
 import { RoleBadge, StatusBadge } from '../../components/ui/Badge'
 import { StoryCard } from '../../components/ui/StoryCard'
 import { GenreBadge } from '../../components/ui/Badge'
+import { Modal } from '../../components/ui/Modal'
+import { Button } from '../../components/ui/Button'
 
 type Tab = 'stories' | 'about'
 
 export const ProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>()
   const navigate = useNavigate()
-  const { allUsers, currentUser } = useAuthStore()
+  const { allUsers, currentUser, fetchAllUsers, updateUser } = useAuthStore()
   const { stories, comments } = useStoryStore()
+  const { addToast } = useUIStore()
   const [tab, setTab] = useState<Tab>('stories')
+  const [loading, setLoading] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editForm, setEditForm] = useState({ username: '', email: '', name: '', surname: '' })
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (allUsers.length === 0) {
+      setLoading(true)
+      fetchAllUsers().finally(() => setLoading(false))
+    }
+  }, [])
 
   const user = allUsers.find(u => u.username === username)
+
+  const openEdit = () => {
+    if (!user) return
+    setEditForm({ username: user.username, email: user.email, name: user.name, surname: user.surname })
+    setEditOpen(true)
+  }
+
+  const handleEditSave = async () => {
+    if (!user) return
+    setSaving(true)
+    try {
+      await updateUser(user.user_id, editForm)
+      addToast('Profile updated successfully!')
+      setEditOpen(false)
+      navigate(`/profile/${editForm.username}`, { replace: true })
+    } catch (err: any) {
+      addToast(err.response?.data?.message ?? 'Failed to update profile.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <p className="text-slate-400">Loading profile...</p>
+      </div>
+    )
+  }
 
   if (!user) {
     return (
@@ -49,7 +93,7 @@ export const ProfilePage: React.FC = () => {
         <div className="absolute bottom-0 left-0 right-0 px-6 flex items-end justify-between">
           <Avatar name={`${user.name} ${user.surname}`} size="xl" className="ring-4 ring-slate-950" />
           {currentUser?.user_id === user.user_id && (
-            <button className="mb-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+            <button onClick={openEdit} className="mb-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
               Edit Profile
             </button>
           )}
@@ -158,6 +202,31 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Profile">
+        <div className="space-y-4">
+          {[
+            { label: 'First Name', key: 'name' },
+            { label: 'Last Name', key: 'surname' },
+            { label: 'Username', key: 'username' },
+            { label: 'Email', key: 'email' },
+          ].map(({ label, key }) => (
+            <div key={key}>
+              <label className="block text-sm text-slate-400 mb-1.5">{label}</label>
+              <input
+                type={key === 'email' ? 'email' : 'text'}
+                value={editForm[key as keyof typeof editForm]}
+                onChange={e => setEditForm(p => ({ ...p, [key]: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          ))}
+          <div className="flex gap-3 pt-2">
+            <Button variant="ghost" className="flex-1" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button className="flex-1" loading={saving} onClick={handleEditSave}>Save Changes</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

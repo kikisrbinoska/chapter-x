@@ -119,7 +119,6 @@ export interface Notification {
 export interface Genre {
   genre_id: number
   name: string
-  story_count: number
 }
 
 export interface StoryAnalytics {

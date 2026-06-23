@@ -186,8 +186,8 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.Property(x => x.Content).HasColumnName("list_content");
                 e.Property(x => x.IsPublic).HasColumnName("is_public");
                 e.Property(x => x.UserId).HasColumnName("user_id");
-                e.Property(x => x.CreatedAt).HasColumnName("created_at");
-                e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+                e.Property(x => x.CreatedAt).HasColumnName("list_created_at");
+                e.Property(x => x.UpdatedAt).HasColumnName("list_updated_at");
                 e.HasOne(x => x.User).WithMany(u => u.ReadingLists).HasForeignKey(x => x.UserId);
             });
 

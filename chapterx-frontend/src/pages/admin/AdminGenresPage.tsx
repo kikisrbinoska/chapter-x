@@ -9,7 +9,8 @@ import { Genre } from '../../types'
 
 export const AdminGenresPage: React.FC = () => {
   const navigate = useNavigate()
-  const { genres, fetchGenres, addGenre, deleteGenre } = useStoryStore()
+  const { genres, fetchGenres, addGenre, deleteGenre, stories } = useStoryStore()
+  const publishedStories = stories.filter(s => s.status === 'published')
   const { addToast } = useUIStore()
   const [addOpen, setAddOpen] = useState(false)
   const [newName, setNewName] = useState('')
@@ -74,16 +75,16 @@ export const AdminGenresPage: React.FC = () => {
                 <span className="text-white font-medium">{genre.name}</span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-slate-500 text-sm">{genre.story_count} stories</span>
+                <span className="text-slate-500 text-sm">{publishedStories.filter(s => s.genres.some(g => g.toLowerCase() === genre.name.toLowerCase())).length} stories</span>
                 <button
                   onClick={() => setDeleteTarget(genre)}
                   className={`transition-colors p-1 rounded ${
-                    genre.story_count > 0
+                    publishedStories.some(s => s.genres.some(g => g.toLowerCase() === genre.name.toLowerCase()))
                       ? 'text-slate-700 cursor-not-allowed'
                       : 'text-slate-500 hover:text-rose-400 hover:bg-rose-500/10'
                   }`}
-                  disabled={genre.story_count > 0}
-                  title={genre.story_count > 0 ? 'Cannot delete genre with stories' : 'Delete genre'}
+                  disabled={publishedStories.some(s => s.genres.some(g => g.toLowerCase() === genre.name.toLowerCase()))}
+                  title={publishedStories.some(s => s.genres.some(g => g.toLowerCase() === genre.name.toLowerCase())) ? 'Cannot delete genre with stories' : 'Delete genre'}
                 >
                   <Trash2 size={14} />
                 </button>

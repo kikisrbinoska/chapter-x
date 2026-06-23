@@ -5,19 +5,10 @@ import logo from '../../assets/chapterX-removebg-preview.png'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { Button } from '../../components/ui/Button'
-import { Avatar } from '../../components/ui/Avatar'
-import { RoleBadge } from '../../components/ui/Badge'
-
-const quickUsers = [
-  { username: 'admin_alex', name: 'Alex Admin', role: 'admin' as const },
-  { username: 'elena_writes', name: 'Elena Dimitrova', role: 'writer' as const },
-  { username: 'boris_writer', name: 'Boris Nikolov', role: 'writer' as const },
-  { username: 'sara_reader', name: 'Sara Petkovska', role: 'regular' as const },
-]
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
-  const { login, switchUser } = useAuthStore()
+  const { login } = useAuthStore()
   const { addToast } = useUIStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -48,16 +39,6 @@ export const LoginPage: React.FC = () => {
     }
   }
 
-  const handleQuickLogin = (username: string) => {
-    const { allUsers } = useAuthStore.getState()
-    const user = allUsers.find(u => u.username === username)
-    if (user) {
-      switchUser(user.user_id)
-      addToast(`Signed in as ${user.name}`)
-      navigate('/')
-    }
-  }
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -68,32 +49,6 @@ export const LoginPage: React.FC = () => {
           </Link>
           <h1 className="font-serif text-2xl font-bold text-white">Welcome back</h1>
           <p className="text-slate-400 text-sm mt-2">Sign in to your account</p>
-        </div>
-
-        {/* Quick login */}
-        <div className="mb-6">
-          <p className="text-xs text-slate-500 text-center mb-3">Quick demo login</p>
-          <div className="grid grid-cols-2 gap-2">
-            {quickUsers.map(u => (
-              <button
-                key={u.username}
-                onClick={() => handleQuickLogin(u.username)}
-                className="flex items-center gap-2 p-3 bg-slate-800 border border-slate-700 rounded-xl hover:border-indigo-500/50 hover:bg-slate-700/50 transition-all group"
-              >
-                <Avatar name={u.name} size="sm" />
-                <div className="text-left min-w-0">
-                  <p className="text-white text-xs font-medium truncate">{u.name}</p>
-                  <RoleBadge role={u.role} />
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 h-px bg-slate-700" />
-          <span className="text-slate-600 text-xs">or sign in with email</span>
-          <div className="flex-1 h-px bg-slate-700" />
         </div>
 
         {/* Form */}

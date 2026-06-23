@@ -7,7 +7,6 @@ import { UserRole } from './types'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
 import { ToastContainer } from './components/ui/Toast'
-import { DevSwitcher } from './components/DevSwitcher'
 import { Spinner } from './components/ui/Spinner'
 
 // Lazy imports
@@ -187,7 +186,6 @@ function App() {
       </main>
       <Footer />
       <ToastContainer />
-      <DevSwitcher />
     </div>
   )
 }

@@ -48,7 +48,8 @@ function mapReadingList(l: any): ReadingList {
 function getAuthHeaders() {
   try {
     const token = JSON.parse(localStorage.getItem('chapterx-auth') || '{}')?.state?.token
-    return token ? { Authorization: `Bearer ${token}` } : {}
+    if (!token || token === 'mock-token') return {}
+    return { Authorization: `Bearer ${token}` }
   } catch {
     return {}
   }
@@ -144,10 +145,10 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
         author_username: s.writer?.user?.username ?? '',
         created_at: s.createdAt,
         updated_at: s.updatedAt,
-        total_likes: 0,
-        total_comments: 0,
-        total_chapters: 0,
-        total_views: 0,
+        total_likes: s.likes?.length ?? 0,
+        total_comments: s.comments?.length ?? 0,
+        total_chapters: s.chapters?.length ?? 0,
+        total_views: s.chapters?.reduce((sum: number, c: any) => sum + (c.viewCount ?? 0), 0) ?? 0,
         genres: (s.hasGenres ?? []).map((hg: any) => hg.genre?.name ?? hg.name).filter(Boolean),
       }))
       if (stories.length > 0) set({ stories })

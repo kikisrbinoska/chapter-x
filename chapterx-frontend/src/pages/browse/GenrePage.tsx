@@ -48,7 +48,8 @@ export const GenrePage: React.FC = () => {
 
 export const GenresListPage: React.FC = () => {
   const navigate = useNavigate()
-  const { genres } = useStoryStore()
+  const { genres, stories } = useStoryStore()
+  const publishedStories = stories.filter(s => s.status === 'published')
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -67,7 +68,7 @@ export const GenresListPage: React.FC = () => {
             >
               <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
                 <p className="font-serif font-semibold text-white text-center">{genre.name}</p>
-                <p className="text-white/60 text-xs mt-1">{genre.story_count} stories</p>
+                <p className="text-white/60 text-xs mt-1">{publishedStories.filter(s => s.genres.some(g => g.toLowerCase() === genre.name.toLowerCase())).length} stories</p>
               </div>
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
             </button>

@@ -13,9 +13,6 @@ export const Footer: React.FC = () => (
             </div>
             <span className="font-serif font-bold text-white">ChapterX</span>
           </Link>
-          <p className="text-slate-500 text-sm">
-            A collaborative storytelling platform for writers and readers.
-          </p>
         </div>
         <div>
           <h4 className="text-white text-sm font-medium mb-3">Explore</h4>
