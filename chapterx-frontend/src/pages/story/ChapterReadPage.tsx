@@ -1,8 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, BookOpen, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import axios from 'axios'
 import { useStoryStore } from '../../store/storyStore'
+import { Chapter } from '../../types'
 import { Button } from '../../components/ui/Button'
+
+const API = 'https://localhost:7125/api'
+
+function mapChapter(c: any): Chapter {
+  return {
+    chapter_id: c.id ?? c.chapter_id,
+    story_id: c.storyId ?? c.story_id,
+    title: c.title ?? c.name ?? '',
+    content: c.content ?? '',
+    chapter_number: c.number ?? c.chapter_number ?? 0,
+    word_count: c.wordCount ?? c.word_count ?? 0,
+    view_count: c.viewCount ?? c.view_count ?? 0,
+    is_published: true,
+    created_at: c.createdAt ?? c.created_at ?? '',
+    updated_at: c.updatedAt ?? c.updated_at ?? '',
+  }
+}
 
 export const ChapterReadPage: React.FC = () => {
   const { storyId, chapterId } = useParams<{ storyId: string; chapterId: string }>()
@@ -10,9 +29,26 @@ export const ChapterReadPage: React.FC = () => {
   const { stories, chapters, incrementViewCount } = useStoryStore()
   const [scrollProgress, setScrollProgress] = useState(0)
   const [viewed, setViewed] = useState(false)
+  const [chapter, setChapter] = useState<Chapter | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    setViewed(false)
+    setScrollProgress(0)
+    axios.get(`${API}/chapters/${chapterId}`)
+      .then(res => {
+        const data = res.data?.chapter ?? res.data
+        setChapter(mapChapter(data))
+      })
+      .catch(() => {
+        const fallback = chapters.find(c => c.chapter_id === Number(chapterId))
+        if (fallback) setChapter(fallback)
+      })
+      .finally(() => setLoading(false))
+  }, [chapterId])
 
   const story = stories.find(s => s.story_id === Number(storyId))
-  const chapter = chapters.find(c => c.chapter_id === Number(chapterId))
   const storyChapters = chapters
     .filter(c => c.story_id === Number(storyId) && c.is_published)
     .sort((a, b) => a.chapter_number - b.chapter_number)
@@ -36,6 +72,14 @@ export const ChapterReadPage: React.FC = () => {
     window.addEventListener('scroll', handler)
     return () => window.removeEventListener('scroll', handler)
   }, [chapter, viewed, incrementViewCount])
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <p className="text-slate-400">Loading chapter...</p>
+      </div>
+    )
+  }
 
   if (!story || !chapter) {
     return (
@@ -72,10 +116,7 @@ export const ChapterReadPage: React.FC = () => {
             <p className="text-slate-500 text-xs">Chapter {chapter.chapter_number}</p>
           </div>
 
-          <div className="flex items-center gap-1 text-slate-400 text-xs">
-            <Eye size={12} />
-            {scrollProgress.toFixed(0)}%
-          </div>
+          <div />
         </div>
       </div>
 
@@ -89,16 +130,6 @@ export const ChapterReadPage: React.FC = () => {
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white mb-4">
             {chapter.title}
           </h1>
-          <div className="flex items-center justify-center gap-4 text-slate-500 text-sm">
-            <span className="flex items-center gap-1">
-              <BookOpen size={13} />
-              {chapter.word_count.toLocaleString()} words
-            </span>
-            <span className="flex items-center gap-1">
-              <Eye size={13} />
-              {chapter.view_count.toLocaleString()} reads
-            </span>
-          </div>
           <div className="mt-4 w-16 h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent mx-auto" />
         </div>
 

@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { Heart, MessageCircle, BookOpen } from 'lucide-react'
+import { Heart, MessageCircle, BookOpen, Eye } from 'lucide-react'
 import { Story } from '../../types'
 
 interface Props {
@@ -49,15 +49,23 @@ export const StoryAnalytics: React.FC<Props> = ({ stories }) => {
   const totalLikes = stories.reduce((a, s) => a + s.total_likes, 0)
   const totalComments = stories.reduce((a, s) => a + s.total_comments, 0)
   const totalChapters = stories.reduce((a, s) => a + s.total_chapters, 0)
+  const totalViews = stories.reduce((a, s) => a + s.total_views, 0)
 
-  // Likes per story (sorted by created_at)
-  const likesData = [...published]
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-    .map(s => ({
-      date: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-      likes: s.total_likes,
-      story: s.title,
-    }))
+  const sortedPublished = [...published].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  )
+
+  const likesData = sortedPublished.map(s => ({
+    date: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+    likes: s.total_likes,
+    story: s.title,
+  }))
+
+  const viewsData = sortedPublished.map(s => ({
+    date: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+    views: s.total_views,
+    story: s.title,
+  }))
 
   if (published.length === 0) {
     return (
@@ -70,10 +78,32 @@ export const StoryAnalytics: React.FC<Props> = ({ stories }) => {
   return (
     <div className="space-y-6">
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={<Eye size={18} className="text-cyan-300" />} label="Total Views" value={totalViews} color="bg-cyan-500/20" />
         <StatCard icon={<Heart size={18} className="text-rose-300" />} label="Total Likes" value={totalLikes} color="bg-rose-500/20" />
         <StatCard icon={<MessageCircle size={18} className="text-violet-300" />} label="Total Comments" value={totalComments} color="bg-violet-500/20" />
         <StatCard icon={<BookOpen size={18} className="text-emerald-300" />} label="Total Chapters" value={totalChapters} color="bg-emerald-500/20" />
+      </div>
+
+      {/* Views chart */}
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Eye size={16} className="text-cyan-400" />
+          <h3 className="text-white font-semibold">Views per Story</h3>
+        </div>
+        {viewsData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={viewsData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickLine={false} axisLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="views" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Views" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-slate-500 text-sm text-center py-8">No views yet</p>
+        )}
       </div>
 
       {/* Likes chart */}
@@ -108,6 +138,7 @@ export const StoryAnalytics: React.FC<Props> = ({ stories }) => {
                 <div key={s.story_id} className="flex items-center justify-between text-sm">
                   <span className="text-slate-300 truncate max-w-xs">{s.title}</span>
                   <div className="flex items-center gap-4 text-slate-400 flex-shrink-0">
+                    <span className="flex items-center gap-1"><Eye size={12} /> {s.total_views.toLocaleString()}</span>
                     <span className="flex items-center gap-1"><Heart size={12} /> {s.total_likes}</span>
                     <span className="flex items-center gap-1"><MessageCircle size={12} /> {s.total_comments}</span>
                   </div>

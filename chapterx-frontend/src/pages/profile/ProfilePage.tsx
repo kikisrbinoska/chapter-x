@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { BookOpen, Heart, Calendar, MessageCircle } from 'lucide-react'
+import { BookOpen, Heart, Calendar, MessageCircle, Eye } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useStoryStore } from '../../store/storyStore'
 import { useUIStore } from '../../store/uiStore'
@@ -75,6 +75,7 @@ export const ProfilePage: React.FC = () => {
   const userStories = stories.filter(s => s.user_id === user.user_id && s.status === 'published')
   const totalLikes = userStories.reduce((acc, s) => acc + s.total_likes, 0)
   const totalComments = userStories.reduce((acc, s) => acc + s.total_comments, 0)
+  const totalViews = userStories.reduce((acc, s) => acc + s.total_views, 0)
   const allGenres = [...new Set(userStories.flatMap(s => s.genres))]
 
   return (
@@ -119,11 +120,12 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
           { icon: <BookOpen size={16} className="text-indigo-400" />, value: userStories.length, label: 'Stories' },
           { icon: <Heart size={16} className="text-rose-400" />, value: totalLikes.toLocaleString(), label: 'Likes' },
           { icon: <MessageCircle size={16} className="text-amber-400" />, value: totalComments, label: 'Comments' },
+          { icon: <Eye size={16} className="text-cyan-400" />, value: totalViews.toLocaleString(), label: 'Views' },
         ].map(s => (
           <div key={s.label} className="bg-slate-800 border border-slate-700 rounded-xl p-4 text-center">
             <div className="flex justify-center mb-1">{s.icon}</div>

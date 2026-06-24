@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, BookOpen, Heart, MessageCircle, TrendingUp, Bell } from 'lucide-react'
+import { Plus, BookOpen, Heart, MessageCircle, TrendingUp, Bell, Eye } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useStoryStore } from '../../store/storyStore'
 import { useNotificationStore } from '../../store/notificationStore'
@@ -36,6 +36,7 @@ export const WriterDashboard: React.FC = () => {
   const published = myStories.filter(s => s.status === 'published')
   const drafts = myStories.filter(s => s.status === 'draft')
   const totalLikes = myStories.reduce((acc, s) => acc + s.total_likes, 0)
+  const totalViews = myStories.reduce((acc, s) => acc + s.total_views, 0)
 
   const recentNotifs = notifications.slice(0, 5)
 
@@ -56,10 +57,11 @@ export const WriterDashboard: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { icon: <BookOpen size={20} className="text-indigo-300" />, label: 'Total Stories', value: myStories.length, sub: `${published.length} published`, color: 'bg-indigo-500/20' },
           { icon: <Heart size={20} className="text-rose-300" />, label: 'Total Likes', value: totalLikes.toLocaleString(), sub: 'Across all stories', color: 'bg-rose-500/20' },
+          { icon: <Eye size={20} className="text-cyan-300" />, label: 'Total Views', value: totalViews.toLocaleString(), sub: 'Chapter reads', color: 'bg-cyan-500/20' },
           { icon: <TrendingUp size={20} className="text-emerald-300" />, label: 'Drafts', value: drafts.length, sub: 'In progress', color: 'bg-emerald-500/20' },
         ].map(s => (
           <div key={s.label} className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
@@ -109,6 +111,7 @@ export const WriterDashboard: React.FC = () => {
                         {isCollab && <span className="text-slate-500">by {story.author_username}</span>}
                         <span className="flex items-center gap-1"><Heart size={11} /> {story.total_likes}</span>
                         <span className="flex items-center gap-1"><MessageCircle size={11} /> {story.total_comments}</span>
+                        <span className="flex items-center gap-1"><Eye size={11} /> {story.total_views.toLocaleString()}</span>
                         <span>{story.total_chapters} chapters</span>
                       </div>
                     </div>

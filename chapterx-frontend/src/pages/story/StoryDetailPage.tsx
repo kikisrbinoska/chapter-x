@@ -218,6 +218,10 @@ export const StoryDetailPage: React.FC = () => {
                 <span className="text-white">{liveComments ?? story.total_comments}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-slate-400">Views</span>
+                <span className="text-white">{story.total_views.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-slate-400">Published</span>
                 <span className="text-white">{new Date(story.created_at).toLocaleDateString()}</span>
               </div>
