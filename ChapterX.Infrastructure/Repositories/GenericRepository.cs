@@ -17,7 +17,7 @@ namespace ChapterX.Infrastructure.Repositories
             _dbSet = context.Set<T>();
         }
 
-        public async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
             => await _dbSet.FindAsync([id], cancellationToken);
 
         public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)

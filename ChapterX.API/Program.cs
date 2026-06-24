@@ -76,14 +76,6 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-app.UseCors("Frontend");
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.UseExceptionHandler(err => err.Run(async ctx =>
 {
     var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
@@ -128,6 +120,14 @@ app.UseExceptionHandler(err => err.Run(async ctx =>
     ctx.Response.StatusCode = status;
     await ctx.Response.WriteAsJsonAsync(new { message });
 }));
+
+app.UseCors("Frontend");
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

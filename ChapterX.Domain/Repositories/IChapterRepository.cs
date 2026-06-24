@@ -6,5 +6,6 @@ namespace ChapterX.Domain.Repositories
     {
         Task<IEnumerable<Chapter>> GetByStoryIdAsync(int storyId, CancellationToken cancellationToken = default);
         Task<Chapter?> GetByIdWithStoryAsync(int id, CancellationToken cancellationToken = default);
+        Task IncrementViewCountAsync(int id, CancellationToken cancellationToken = default);
     }
 }

@@ -87,6 +87,7 @@ namespace ChapterX.Infrastructure.Data.DataContext
                 e.HasKey(x => x.Id);
                 e.Property(x => x.Id).HasColumnName("story_id");
                 e.Property(x => x.MatureContent).HasColumnName("mature_content");
+                e.Property(x => x.Title).HasColumnName("title");
                 e.Property(x => x.ShortDescription).HasColumnName("short_description");
                 e.Property(x => x.Image).HasColumnName("image");
                 e.Property(x => x.Content).HasColumnName("story_content");

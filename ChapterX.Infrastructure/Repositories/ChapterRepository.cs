@@ -30,5 +30,12 @@ namespace ChapterX.Infrastructure.Repositories
                 .Include(c => c.Story)
                 .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
         }
+
+        public async Task IncrementViewCountAsync(int id, CancellationToken cancellationToken = default)
+        {
+            await _dbSet
+                .Where(c => c.Id == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(c => c.ViewCount, c => c.ViewCount + 1), cancellationToken);
+        }
     }
 }

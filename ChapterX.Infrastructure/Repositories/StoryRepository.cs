@@ -24,6 +24,19 @@ namespace ChapterX.Infrastructure.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        public override async Task<Story?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(s => s.HasGenres)
+                    .ThenInclude(hg => hg.Genre)
+                .Include(s => s.Writer)
+                    .ThenInclude(w => w!.User)
+                .Include(s => s.Likes)
+                .Include(s => s.Comments)
+                .Include(s => s.Chapters)
+                .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+        }
+
         public async Task<IEnumerable<Story>> GetByWriterIdAsync(int writerId, CancellationToken cancellationToken = default)
         {
             return await _dbSet

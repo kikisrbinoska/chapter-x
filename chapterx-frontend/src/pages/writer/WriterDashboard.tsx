@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, BookOpen, Eye, Heart, MessageCircle, TrendingUp, Bell } from 'lucide-react'
+import { Plus, BookOpen, Heart, MessageCircle, TrendingUp, Bell } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { useStoryStore } from '../../store/storyStore'
 import { useNotificationStore } from '../../store/notificationStore'
@@ -21,8 +21,10 @@ function timeAgo(str: string): string {
 export const WriterDashboard: React.FC = () => {
   const navigate = useNavigate()
   const { currentUser } = useAuthStore()
-  const { stories, collaborations } = useStoryStore()
+  const { stories, collaborations, fetchStories } = useStoryStore()
   const { notifications } = useNotificationStore()
+
+  useEffect(() => { fetchStories() }, [])
 
   if (!currentUser) return null
 
@@ -33,7 +35,6 @@ export const WriterDashboard: React.FC = () => {
   const allDashboardStories = [...ownedStories, ...collabStories]
   const published = myStories.filter(s => s.status === 'published')
   const drafts = myStories.filter(s => s.status === 'draft')
-  const totalViews = myStories.reduce((acc, s) => acc + s.total_views, 0)
   const totalLikes = myStories.reduce((acc, s) => acc + s.total_likes, 0)
 
   const recentNotifs = notifications.slice(0, 5)
@@ -55,10 +56,9 @@ export const WriterDashboard: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {[
           { icon: <BookOpen size={20} className="text-indigo-300" />, label: 'Total Stories', value: myStories.length, sub: `${published.length} published`, color: 'bg-indigo-500/20' },
-          { icon: <Eye size={20} className="text-blue-300" />, label: 'Total Views', value: totalViews.toLocaleString(), sub: 'All time', color: 'bg-blue-500/20' },
           { icon: <Heart size={20} className="text-rose-300" />, label: 'Total Likes', value: totalLikes.toLocaleString(), sub: 'Across all stories', color: 'bg-rose-500/20' },
           { icon: <TrendingUp size={20} className="text-emerald-300" />, label: 'Drafts', value: drafts.length, sub: 'In progress', color: 'bg-emerald-500/20' },
         ].map(s => (
@@ -107,7 +107,6 @@ export const WriterDashboard: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-3 text-slate-500 text-xs">
                         {isCollab && <span className="text-slate-500">by {story.author_username}</span>}
-                        <span className="flex items-center gap-1"><Eye size={11} /> {story.total_views.toLocaleString()}</span>
                         <span className="flex items-center gap-1"><Heart size={11} /> {story.total_likes}</span>
                         <span className="flex items-center gap-1"><MessageCircle size={11} /> {story.total_comments}</span>
                         <span>{story.total_chapters} chapters</span>
@@ -154,9 +153,8 @@ export const WriterDashboard: React.FC = () => {
           <div className="flex items-center gap-2 mb-6">
             <TrendingUp size={18} className="text-indigo-400" />
             <h2 className="font-serif text-xl font-bold text-white">Analytics</h2>
-            <span className="text-slate-500 text-sm">(Story: The Chronicles of Eldoria)</span>
           </div>
-          <StoryAnalytics />
+          <StoryAnalytics stories={myStories} />
         </div>
       )}
     </div>

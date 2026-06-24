@@ -5,6 +5,7 @@ namespace ChapterX.Application.Story.Commands
 {
     public record AddRequest(
         bool MatureContent,
+        [Required][MaxLength(200)] string Title,
         [Required][MaxLength(500)] string ShortDescription,
         [MaxLength(2048)] string? Image,
         [Required] string Content,

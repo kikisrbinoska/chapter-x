@@ -25,6 +25,7 @@ namespace ChapterX.Application.Story.Commands
                 throw new UnauthorizedAccessException("You do not own this story.");
 
             story.MatureContent = request.MatureContent;
+            story.Title = request.Title;
             story.ShortDescription = request.ShortDescription;
             story.Image = request.Image;
             story.Content = request.Content;

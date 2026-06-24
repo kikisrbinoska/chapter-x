@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Heart, MessageCircle, Eye, Lock } from 'lucide-react'
+import { Heart, MessageCircle, Lock } from 'lucide-react'
 import { Story } from '../../types'
 import { useAuthStore } from '../../store/authStore'
 import { StatusBadge, GenreBadge } from './Badge'
@@ -84,10 +84,6 @@ export const StoryCard: React.FC<StoryCardProps> = ({ story, showStatus = false 
           <span className="flex items-center gap-1">
             <MessageCircle size={12} />
             {story.total_comments}
-          </span>
-          <span className="flex items-center gap-1 ml-auto">
-            <Eye size={12} />
-            {story.total_views.toLocaleString()}
           </span>
         </div>
       </div>

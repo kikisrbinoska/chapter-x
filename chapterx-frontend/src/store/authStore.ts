@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { User, UserRole } from '../types'
-import { mockUsers } from '../data/mockData'
 import axios from 'axios'
 
 const API_BASE = 'https://localhost:7125/api'
@@ -152,6 +151,7 @@ export const useAuthStore = create<AuthStore>()(
         try {
           const res = await axios.get(`${API_BASE}/users`)
           const data: any[] = res.data?.users ?? res.data ?? []
+          const existing = get().allUsers
           const users: User[] = data.map((u: any) => ({
             user_id: u.id,
             username: u.username,
@@ -162,6 +162,7 @@ export const useAuthStore = create<AuthStore>()(
             created_at: u.createdAt ?? new Date().toISOString(),
             follower_count: 0,
             following_count: 0,
+            bio: existing.find(e => e.user_id === u.id)?.bio,
           }))
           set({ allUsers: users })
         } catch {

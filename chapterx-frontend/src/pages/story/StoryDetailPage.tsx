@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Eye, Users, Calendar, Plus, BookmarkPlus } from 'lucide-react'
+import { ArrowLeft, BookOpen, Users, Calendar, Plus, BookmarkPlus } from 'lucide-react'
 import { useStoryStore } from '../../store/storyStore'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
@@ -116,6 +116,9 @@ export const StoryDetailPage: React.FC = () => {
 
       {/* Hero */}
       <div className={`relative rounded-2xl overflow-hidden mb-8 bg-gradient-to-br ${gradient}`}>
+        {story.cover_image && (
+          <img src={story.cover_image} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
         <div className="relative p-8 sm:p-12">
           <div className="flex flex-wrap gap-2 mb-4">
@@ -133,10 +136,6 @@ export const StoryDetailPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Avatar name={story.author_username} size="sm" />
               <span className="text-white text-sm font-medium">{story.author_username}</span>
-            </div>
-            <div className="flex items-center gap-1 text-slate-400 text-sm">
-              <Eye size={14} />
-              {story.total_views.toLocaleString()} views
             </div>
             <div className="flex items-center gap-1 text-slate-400 text-sm">
               <BookOpen size={14} />
@@ -168,6 +167,13 @@ export const StoryDetailPage: React.FC = () => {
               </Button>
             )}
           </div>
+
+          {/* Story content */}
+          {story.content && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+              <p className="text-slate-200 leading-relaxed font-serif whitespace-pre-wrap">{story.content}</p>
+            </div>
+          )}
 
           {/* Chapters */}
           <div>
@@ -206,10 +212,6 @@ export const StoryDetailPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-slate-400">Likes</span>
                 <span className="text-white">{(liveLikes ?? story.total_likes).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Views</span>
-                <span className="text-white">{story.total_views.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Comments</span>

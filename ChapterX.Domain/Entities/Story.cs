@@ -11,6 +11,7 @@ namespace ChapterX.Domain.Entities
     {
         public int Id { get; set; }
         public bool MatureContent { get; set; }
+        public string Title { get; set; } = string.Empty;
         public string ShortDescription { get; set; } = string.Empty;
         public string? Image { get; set; }
         public string Content { get; set; } = string.Empty;

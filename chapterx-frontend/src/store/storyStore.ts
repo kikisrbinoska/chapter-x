@@ -137,9 +137,10 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
       const stories: Story[] = data.map((s: any) => ({
         story_id: s.id,
         user_id: s.userId,
-        title: s.shortDescription,
-        short_description: s.shortDescription,
-        content: s.content,
+        title: s.title ?? '',
+        short_description: s.shortDescription ?? '',
+        content: s.content ?? '',
+        cover_image: s.image ?? undefined,
         mature_content: s.matureContent,
         status: 'published' as StoryStatus,
         author_username: s.writer?.user?.username ?? '',
@@ -202,10 +203,12 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
 
   addStory: async (story) => {
     set(state => ({ stories: [...state.stories, story] }))
+    const imageUrl = story.cover_image?.startsWith('http') ? story.cover_image : null
     const res = await axios.post(`${API}/stories`, {
       matureContent: story.mature_content,
-      shortDescription: story.short_description || story.title,
-      image: null,
+      title: story.title,
+      shortDescription: story.short_description,
+      image: imageUrl,
       content: story.content,
       userId: story.user_id,
       genres: story.genres ?? [],
@@ -232,11 +235,14 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
     try {
       const story = get().stories.find(s => s.story_id === id)
       if (!story) return
+      const rawImage = partial.cover_image ?? story.cover_image ?? null
+      const imageUrl = rawImage?.startsWith('http') ? rawImage : null
       await axios.put(`${API}/stories/${id}`, {
         id,
         matureContent: partial.mature_content ?? story.mature_content,
-        shortDescription: partial.title ?? partial.short_description ?? story.title ?? story.short_description,
-        image: null,
+        title: partial.title ?? story.title,
+        shortDescription: partial.short_description ?? story.short_description,
+        image: imageUrl,
         content: partial.content ?? story.content,
       }, { headers: getAuthHeaders() })
     } catch {
@@ -334,12 +340,18 @@ export const useStoryStore = create<StoryStore>((set, get) => ({
     }
   },
 
-  incrementViewCount: (chapterId) =>
+  incrementViewCount: (chapterId) => {
+    const chapter = get().chapters.find(c => c.chapter_id === chapterId)
     set(state => ({
       chapters: state.chapters.map(c =>
         c.chapter_id === chapterId ? { ...c, view_count: c.view_count + 1 } : c
       ),
-    })),
+      stories: state.stories.map(s =>
+        s.story_id === chapter?.story_id ? { ...s, total_views: s.total_views + 1 } : s
+      ),
+    }))
+    axios.patch(`${API}/chapters/${chapterId}/view`, null, { headers: getAuthHeaders() }).catch(() => {})
+  },
 
   addComment: (comment) =>
     set(state => ({

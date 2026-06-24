@@ -8,13 +8,6 @@ import { useUIStore } from '../../store/uiStore'
 
 const API = 'https://localhost:7125/api'
 
-function getAuthHeaders() {
-  try {
-    const token = JSON.parse(localStorage.getItem('chapterx-auth') || '{}')?.state?.token
-    return token ? { Authorization: `Bearer ${token}` } : {}
-  } catch { return {} }
-}
-
 interface LikeButtonProps {
   storyId: number
   authorUserId: number
@@ -24,8 +17,9 @@ interface LikeButtonProps {
 
 export const LikeButton: React.FC<LikeButtonProps> = ({ storyId, authorUserId, totalLikes, onCountChange }) => {
   const navigate = useNavigate()
-  const { currentUser } = useAuthStore()
+  const { currentUser, token } = useAuthStore()
   const { addNotification } = useNotificationStore()
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
   const { addToast } = useUIStore()
   const [liked, setLiked] = useState(false)
   const [count, setCount] = useState(totalLikes)
@@ -54,12 +48,12 @@ export const LikeButton: React.FC<LikeButtonProps> = ({ storyId, authorUserId, t
     setLoading(true)
     try {
       if (liked) {
-        await axios.delete(`${API}/likes/user/${currentUser.user_id}/story/${storyId}`, { headers: getAuthHeaders() })
+        await axios.delete(`${API}/likes/user/${currentUser.user_id}/story/${storyId}`, { headers: authHeaders })
         setLiked(false)
         setCount(c => { const n = c - 1; onCountChange?.(n); return n })
         addToast('Removed from likes', 'info')
       } else {
-        await axios.post(`${API}/likes`, { userId: currentUser.user_id, storyId }, { headers: getAuthHeaders() })
+        await axios.post(`${API}/likes`, { userId: currentUser.user_id, storyId }, { headers: authHeaders })
         setLiked(true)
         setCount(c => { const n = c + 1; onCountChange?.(n); return n })
         if (currentUser.user_id !== authorUserId) {

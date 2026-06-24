@@ -30,6 +30,7 @@ namespace ChapterX.Application.Story.Commands
                 var story = new Domain.Entities.Story
                 {
                     MatureContent = request.MatureContent,
+                    Title = request.Title,
                     ShortDescription = request.ShortDescription,
                     Image = request.Image,
                     Content = request.Content,

@@ -20,6 +20,7 @@ export const CreateStoryPage: React.FC = () => {
     title: '',
     short_description: '',
     content: '',
+    cover_image: '',
     genres: [] as string[],
     mature_content: false,
   })
@@ -44,6 +45,7 @@ export const CreateStoryPage: React.FC = () => {
     const story: Story = {
       story_id: Date.now(),
       ...form,
+      cover_image: form.cover_image || undefined,
       user_id: currentUser.user_id,
       author_username: currentUser.username,
       status,
@@ -123,6 +125,23 @@ export const CreateStoryPage: React.FC = () => {
               {errors.short_description ? <p className="text-rose-400 text-xs">{errors.short_description}</p> : <span />}
               <span className="text-slate-600 text-xs">{form.short_description.length}/280</span>
             </div>
+          </div>
+
+          {/* Cover image */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Cover Image URL <span className="text-slate-500 font-normal">(optional)</span></label>
+            <input
+              value={form.cover_image}
+              onChange={e => {
+                const val = e.target.value
+                if (!val || val.startsWith('http')) setField('cover_image', val)
+              }}
+              placeholder="https://example.com/image.jpg"
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+            {form.cover_image?.startsWith('http') && (
+              <img src={form.cover_image} alt="Cover preview" className="mt-2 h-32 w-full object-cover rounded-xl opacity-80" onError={e => (e.currentTarget.style.display = 'none')} />
+            )}
           </div>
 
           {/* Content */}

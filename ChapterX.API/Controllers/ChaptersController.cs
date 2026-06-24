@@ -1,5 +1,6 @@
 using ChapterX.Application.Chapter.Commands;
 using ChapterX.Application.Chapter.Queries;
+using ChapterX.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,13 @@ namespace ChapterX.API.Controllers
     public class ChaptersController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IChapterRepository _chapterRepository;
         private readonly ILogger<ChaptersController> _logger;
 
-        public ChaptersController(IMediator mediator, ILogger<ChaptersController> logger)
+        public ChaptersController(IMediator mediator, IChapterRepository chapterRepository, ILogger<ChaptersController> logger)
         {
             _mediator = mediator;
+            _chapterRepository = chapterRepository;
             _logger = logger;
         }
 
@@ -37,6 +40,14 @@ namespace ChapterX.API.Controllers
             _logger.LogInformation("Fetching chapter with ID: {ChapterId}", id);
             var response = await _mediator.Send(new GetRequest(id));
             return Ok(response);
+        }
+
+        [HttpPatch("{id:int}/view")]
+        [AllowAnonymous]
+        public async Task<ActionResult> IncrementView(int id)
+        {
+            await _chapterRepository.IncrementViewCountAsync(id);
+            return NoContent();
         }
 
         [HttpPost]

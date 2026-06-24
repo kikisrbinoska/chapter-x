@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Search, Shield, UserX, UserCheck } from 'lucide-react'
+import axios from 'axios'
 import { useAuthStore } from '../../store/authStore'
-import { useNotificationStore } from '../../store/notificationStore'
 import { useUIStore } from '../../store/uiStore'
 import { User, UserRole } from '../../types'
 import { Avatar } from '../ui/Avatar'
@@ -9,13 +9,17 @@ import { RoleBadge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 
+const API = 'https://localhost:7125/api'
+
 export const UserTable: React.FC = () => {
-  const { allUsers, updateUserRole, currentUser } = useAuthStore()
-  const { addNotification } = useNotificationStore()
+  const { allUsers, updateUserRole, currentUser, token } = useAuthStore()
   const { addToast } = useUIStore()
   const [search, setSearch] = useState('')
   const [confirmUser, setConfirmUser] = useState<User | null>(null)
   const [confirmAction, setConfirmAction] = useState<'promote' | 'demote' | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
 
   const filtered = allUsers.filter(
     u =>
@@ -24,24 +28,32 @@ export const UserTable: React.FC = () => {
       u.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handlePromote = (user: User) => {
-    const newRole: UserRole = user.role === 'regular' ? 'writer' : user.role === 'writer' ? 'admin' : 'admin'
-    updateUserRole(user.user_id, newRole)
-    addNotification({
-      user_id: user.user_id,
-      type: 'system',
-      title: 'Role Updated',
-      message: `Your account has been promoted to ${newRole}.`,
-    })
-    addToast(`${user.username} promoted to ${newRole}`)
-    setConfirmUser(null)
+  const handlePromote = async (user: User) => {
+    setLoading(true)
+    try {
+      await axios.post(`${API}/admins`, { userId: user.user_id }, { headers: authHeaders })
+      updateUserRole(user.user_id, 'admin')
+      addToast(`${user.username} promoted to admin`)
+    } catch (err: any) {
+      addToast(err?.response?.data?.message || 'Failed to promote user.', 'error')
+    } finally {
+      setLoading(false)
+      setConfirmUser(null)
+    }
   }
 
-  const handleDemote = (user: User) => {
-    const newRole: UserRole = user.role === 'admin' ? 'writer' : 'regular'
-    updateUserRole(user.user_id, newRole)
-    addToast(`${user.username} role changed to ${newRole}`, 'info')
-    setConfirmUser(null)
+  const handleDemote = async (user: User) => {
+    setLoading(true)
+    try {
+      await axios.delete(`${API}/admins/${user.user_id}`, { headers: authHeaders })
+      updateUserRole(user.user_id, 'writer')
+      addToast(`${user.username} removed from admin`, 'info')
+    } catch (err: any) {
+      addToast(err?.response?.data?.message || 'Failed to demote user.', 'error')
+    } finally {
+      setLoading(false)
+      setConfirmUser(null)
+    }
   }
 
   const formatDate = (str: string) =>
@@ -139,6 +151,7 @@ export const UserTable: React.FC = () => {
               <Button
                 variant={confirmAction === 'promote' ? 'primary' : 'danger'}
                 className="flex-1"
+                loading={loading}
                 onClick={() => confirmAction === 'promote' ? handlePromote(confirmUser) : handleDemote(confirmUser)}
               >
                 <Shield size={14} />

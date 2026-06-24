@@ -28,7 +28,24 @@ namespace ChapterX.API.Controllers
         {
             _logger.LogInformation("Fetching all stories");
             var response = await _mediator.Send(request);
-            return Ok(response);
+            var stories = response.Stories.Select(s => new
+            {
+                id = s.Id,
+                userId = s.UserId,
+                title = s.Title,
+                shortDescription = s.ShortDescription,
+                image = s.Image,
+                content = s.Content,
+                matureContent = s.MatureContent,
+                createdAt = s.CreatedAt,
+                updatedAt = s.UpdatedAt,
+                writer = s.Writer == null ? null : new { user = s.Writer.User == null ? null : new { username = s.Writer.User.Username } },
+                hasGenres = s.HasGenres.Select(hg => new { genre = new { name = hg.Genre?.Name ?? "" } }),
+                likes = s.Likes.Select(l => new { userId = l.UserId }),
+                comments = s.Comments.Select(c => new { id = c.Id }),
+                chapters = s.Chapters.Select(c => new { id = c.Id, viewCount = c.ViewCount }),
+            });
+            return Ok(new { stories });
         }
 
         // GET: api/Stories/5
@@ -38,7 +55,25 @@ namespace ChapterX.API.Controllers
         {
             _logger.LogInformation("Fetching story with ID: {StoryId}", id);
             var response = await _mediator.Send(new GetRequest(id));
-            return Ok(response);
+            if (response.Story == null) return NotFound();
+            var s = response.Story;
+            return Ok(new
+            {
+                id = s.Id,
+                userId = s.UserId,
+                title = s.Title,
+                shortDescription = s.ShortDescription,
+                image = s.Image,
+                content = s.Content,
+                matureContent = s.MatureContent,
+                createdAt = s.CreatedAt,
+                updatedAt = s.UpdatedAt,
+                writer = s.Writer == null ? null : new { user = s.Writer.User == null ? null : new { username = s.Writer.User.Username } },
+                hasGenres = s.HasGenres.Select(hg => new { genre = new { name = hg.Genre?.Name ?? "" } }),
+                likes = s.Likes.Select(l => new { userId = l.UserId }),
+                comments = s.Comments.Select(c => new { id = c.Id }),
+                chapters = s.Chapters.Select(c => new { id = c.Id, viewCount = c.ViewCount }),
+            });
         }
 
         // POST: api/Stories
@@ -75,7 +110,8 @@ namespace ChapterX.API.Controllers
         {
             _logger.LogInformation("Deleting story with ID: {StoryId}", id);
             var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var response = await _mediator.Send(new DeleteRequest(id, callerId));
+            var isAdmin = User.IsInRole("Admin");
+            var response = await _mediator.Send(new DeleteRequest(id, callerId, isAdmin));
             return Ok(response);
         }
     }
