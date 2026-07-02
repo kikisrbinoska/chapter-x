@@ -17,10 +17,10 @@ namespace ChapterX.Application.Auth
         public async Task<LoginResponse> Handle(LoginRequest request, CancellationToken cancellationToken)
         {
             var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken)
-                ?? throw new UnauthorizedAccessException("Invalid email or password.");
+                ?? throw new UnauthorizedAccessException("No account found with this email. Please register first.");
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
-                throw new UnauthorizedAccessException("Invalid email or password.");
+                throw new UnauthorizedAccessException("Incorrect password. Please try again.");
 
             var token = _jwtTokenService.GenerateToken(user);
 

@@ -15,10 +15,11 @@ export const LoginPage: React.FC = () => {
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const [noAccount, setNoAccount] = useState(false)
 
   const validate = () => {
     const e: typeof errors = {}
-    if (!email.trim()) e.email = 'Email or username is required'
+    if (!email.trim()) e.email = 'Email is required'
     if (!password.trim()) e.password = 'Password is required'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -27,13 +28,21 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = async (ev: React.FormEvent) => {
     ev.preventDefault()
     if (!validate()) return
+    setNoAccount(false)
     setLoading(true)
     try {
       await login(email, password)
       addToast('Welcome back!')
       navigate('/')
     } catch (err: any) {
-      addToast(err.message || 'Login failed', 'error')
+      const message = err?.message || 'Incorrect email or password. Please try again.'
+      if (/no account found/i.test(message)) {
+        setNoAccount(true)
+        setErrors(p => ({ ...p, email: message }))
+      } else {
+        setErrors(p => ({ ...p, password: message }))
+      }
+      addToast(message, 'error')
     } finally {
       setLoading(false)
     }
@@ -54,11 +63,11 @@ export const LoginPage: React.FC = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-400 mb-1.5">Email or Username</label>
+            <label className="block text-sm text-slate-400 mb-1.5">Login with Email</label>
             <input
               type="text"
               value={email}
-              onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })) }}
+              onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); setNoAccount(false) }}
               placeholder="you@example.com"
               className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors ${
                 errors.email ? 'border-rose-500' : 'border-slate-700'
@@ -94,9 +103,9 @@ export const LoginPage: React.FC = () => {
           </Button>
         </form>
 
-        <p className="text-center text-slate-500 text-sm mt-6">
+        <p className={`text-center text-sm mt-6 ${noAccount ? 'text-rose-400' : 'text-slate-500'}`}>
           Don't have an account?{' '}
-          <Link to="/register" className="text-indigo-400 hover:text-indigo-300">
+          <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-medium">
             Create one
           </Link>
         </p>

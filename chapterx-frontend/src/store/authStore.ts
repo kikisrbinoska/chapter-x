@@ -54,8 +54,8 @@ export const useAuthStore = create<AuthStore>()(
           // Only fall through to mock if the backend is unreachable (network/timeout)
           // If the backend responded with an error (4xx/5xx), surface it to the user
           if (err?.response) {
-            const message = err.response.data?.message || err.response.data || 'Invalid email or password.'
-            throw new Error(typeof message === 'string' ? message : 'Invalid email or password.')
+            const message = err.response.data?.message || err.response.data || 'Incorrect email or password. Please try again.'
+            throw new Error(typeof message === 'string' ? message : 'Incorrect email or password. Please try again.')
           }
           // Network error / timeout — fall through to mock login
         }
@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthStore>()(
         const user = get().allUsers.find(
           u => u.username === emailOrUsername || u.email === emailOrUsername
         )
-        if (!user) throw new Error('User not found. Try using a quick-login option.')
+        if (!user) throw new Error('No account found with this email. Please register first.')
         set({ currentUser: user, token: null })
       },
 
